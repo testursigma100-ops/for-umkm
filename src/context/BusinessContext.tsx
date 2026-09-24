@@ -2243,318 +2243,155 @@ export function BusinessProvider({
 
   /*
    * ADD EXPENSE
-   *
-   * BAGIAN INI YANG DIPERBAIKI
    */
   const addExpense = async (
-  data: Omit<Expense, 'id' | 'created_at'>
-): Promise<Expense | null> => {
-  try {
-    console.log('=== MULAI ADD EXPENSE ===', data);
-
-    // 1. Ambil user yang benar-benar sedang login
-    const {
-      data: authData,
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-      throw new Error(`Auth error: ${authError.message}`);
-    }
-
-    const authUser = authData.user;
-
-    if (!authUser) {
-      throw new Error('User belum login. Silakan login ulang.');
-    }
-
-    console.log('USER:', authUser.id);
-
-    // 2. Cari business milik user
-    const {
-      data: businessData,
-      error: businessError,
-    } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('owner_id', authUser.id)
-      .limit(1)
-      .maybeSingle();
-
-    if (businessError) {
-      throw new Error(
-        `Gagal mengambil business: ${businessError.message}`
-      );
-    }
-
-    if (!businessData?.id) {
-      throw new Error(
-        'Business tidak ditemukan untuk akun ini.'
-      );
-    }
-
-    console.log('BUSINESS:', businessData.id);
-
-    // 3. Data yang dikirim ke expenses
-    const payload = {
-      business_id: businessData.id,
-      user_id: authUser.id,
-      name: data.name.trim(),
-      amount: Number(data.amount),
-      category: data.category,
-      date: data.date || getTodayDateString(),
-      notes: data.notes?.trim() || null,
-      created_at: new Date().toISOString(),
-    };
-
-    console.log('EXPENSE PAYLOAD:', payload);
-
-    // 4. Insert ke Supabase
-    const {
-      data: created,
-      error: insertError,
-    } = await supabase
-      .from('expenses')
-      .insert(payload)
-      .select('*')
-      .single();
-
-    if (insertError) {
-      console.error(
-        'SUPABASE EXPENSE ERROR:',
-        insertError
+    data: Omit<Expense, 'id' | 'created_at'>
+  ): Promise<Expense | null> => {
+    try {
+      console.log(
+        '=== MULAI ADD EXPENSE ===',
+        data
       );
 
-      throw new Error(
-        `Supabase: ${insertError.message}${
-          insertError.details
-            ? ` | Details: ${insertError.details}`
-            : ''
-        }${
-          insertError.hint
-            ? ` | Hint: ${insertError.hint}`
-            : ''
-        }`
-      );
-    }
-
-    if (!created) {
-      throw new Error(
-        'Supabase tidak mengembalikan data setelah insert.'
-      );
-    }
-
-    console.log(
-      'EXPENSE BERHASIL DISIMPAN:',
-      created
-    );
-
-    // 5. Masukkan ke state supaya langsung muncul di halaman
-    const newExpense: Expense = {
-      id: created.id,
-      business_id: created.business_id,
-      user_id: created.user_id,
-      name: created.name,
-      amount: Number(created.amount || 0),
-      category: created.category as ExpenseCategory,
-      date:
-        created.date ||
-        data.date ||
-        getTodayDateString(),
-      notes: created.notes || undefined,
-      created_at: created.created_at,
-    };
-
-    setExpenses(prev => [newExpense, ...prev]);
-
-    return newExpense;
-
-  } catch (error: any) {
-    console.error(
-      '=== ADD EXPENSE FINAL ERROR ===',
-      error
-    );
-
-    // Lempar lagi supaya ExpensesPage bisa menampilkan error
-    throw error;
-  }
-};
-
-    /*
-     * Pastikan business milik user yang sedang login.
-     */
-    let currentBiz:
-      | Business
-      | null =
-      business;
-
-    if (
-      !currentBiz?.id ||
-      currentBiz.owner_id !==
-        authUser.id
-    ) {
-      currentBiz =
-        await loadOrCreateUserBusiness(
-          authUser
-        );
-    }
-
-    /*
-     * Kalau business belum ada di state,
-     * cari langsung dari database.
-     */
-    if (!currentBiz?.id) {
+      /*
+       * Ambil user Supabase yang benar-benar sedang login
+       */
       const {
-        data: directBiz,
-        error: bizError,
+        data: authData,
+        error: authError,
+      } =
+        await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(
+          `Auth error: ${authError.message}`
+        );
+      }
+
+      const authUser =
+        authData.user;
+
+      if (!authUser) {
+        throw new Error(
+          'User belum login. Silakan login ulang.'
+        );
+      }
+
+      console.log(
+        'USER:',
+        authUser.id
+      );
+
+      /*
+       * Cari business milik user
+       */
+      const {
+        data: businessData,
+        error: businessError,
       } =
         await supabase
           .from('businesses')
-          .select(
-            'id, owner_id, name, owner_name, business_type, created_at'
-          )
+          .select('*')
           .eq(
             'owner_id',
             authUser.id
           )
-          .order(
-            'created_at',
-            {
-              ascending: true,
-            }
-          )
-          .limit(1);
+          .limit(1)
+          .maybeSingle();
 
-      if (bizError) {
-        console.error(
-          'Error mencari business:',
-          bizError
-        );
-
+      if (businessError) {
         throw new Error(
-          bizError.message
+          `Gagal mengambil business: ${businessError.message}`
         );
       }
 
-      if (
-        directBiz &&
-        directBiz.length > 0
-      ) {
-        const b =
-          directBiz[0];
-
-        currentBiz = {
-          id: b.id,
-          owner_id:
-            b.owner_id,
-          user_id:
-            b.owner_id,
-          name: b.name,
-          owner_name:
-            b.owner_name ||
-            authUser.user_metadata
-              ?.name ||
-            authUser.email?.split(
-              '@'
-            )[0] ||
-            'Pemilik Usaha',
-          phone: '',
-          email:
-            authUser.email ||
-            '',
-          business_type:
-            b.business_type ||
-            'F&B / Kuliner',
-          address: '',
-          receipt_footer:
-            'Terima kasih atas kunjungan Anda!',
-          created_at:
-            b.created_at,
-        };
-
-        setBusiness(
-          currentBiz
+      if (!businessData?.id) {
+        throw new Error(
+          'Business tidak ditemukan untuk akun ini.'
         );
       }
-    }
 
-    if (!currentBiz?.id) {
-      throw new Error(
-        'Business usaha tidak ditemukan. Silakan login ulang.'
+      console.log(
+        'BUSINESS:',
+        businessData.id
       );
-    }
 
-    try {
       /*
-       * Payload EXPENSE
-       *
-       * Sengaja selalu mengirim:
-       * business_id
-       * user_id
+       * Payload expense
        */
       const payload = {
         business_id:
-          currentBiz.id,
-
+          businessData.id,
         user_id:
           authUser.id,
-
         name:
           data.name.trim(),
-
         amount:
-          Number(
-            data.amount || 0
-          ),
-
+          Number(data.amount),
         category:
           data.category,
-
         date:
           data.date ||
           getTodayDateString(),
-
         notes:
           data.notes?.trim() ||
           null,
-
         created_at:
           new Date().toISOString(),
       };
 
       console.log(
-        'MENYIMPAN EXPENSE:',
+        'EXPENSE PAYLOAD:',
         payload
       );
 
+      /*
+       * Insert ke Supabase
+       */
       const {
         data: created,
-        error,
+        error: insertError,
       } =
         await supabase
           .from('expenses')
           .insert(payload)
-          .select()
+          .select('*')
           .single();
 
-      if (error) {
+      if (insertError) {
         console.error(
-          'SUPABASE ADD EXPENSE ERROR:',
-          error
+          'SUPABASE EXPENSE ERROR:',
+          insertError
         );
 
         throw new Error(
-          `Gagal menyimpan pengeluaran: ${error.message}`
+          `Supabase: ${insertError.message}${
+            insertError.details
+              ? ` | Details: ${insertError.details}`
+              : ''
+          }${
+            insertError.hint
+              ? ` | Hint: ${insertError.hint}`
+              : ''
+          }`
         );
       }
 
       if (!created) {
         throw new Error(
-          'Pengeluaran tidak berhasil dibuat di database.'
+          'Supabase tidak mengembalikan data setelah insert.'
         );
       }
 
-      const newExp: Expense = {
+      console.log(
+        'EXPENSE BERHASIL DISIMPAN:',
+        created
+      );
+
+      /*
+       * Update state supaya langsung muncul
+       */
+      const newExpense: Expense = {
         id: created.id,
         business_id:
           created.business_id,
@@ -2579,22 +2416,19 @@ export function BusinessProvider({
           created.created_at,
       };
 
-      /*
-       * Update UI langsung
-       */
       setExpenses(prev => [
-        newExp,
+        newExpense,
         ...prev,
       ]);
 
-      return newExp;
-    } catch (err: any) {
+      return newExpense;
+    } catch (error: any) {
       console.error(
-        'ERROR ADD EXPENSE FINAL:',
-        err
+        '=== ADD EXPENSE FINAL ERROR ===',
+        error
       );
 
-      throw err;
+      throw error;
     }
   };
 
