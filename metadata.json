@@ -1,0 +1,6 @@
+{
+  "name": "BisnisKu AI",
+  "description": "AI business copilot untuk UMKM kuliner & F&B Indonesia. Jualan jalan, bisnis makin jelas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
