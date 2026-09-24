@@ -2247,46 +2247,138 @@ export function BusinessProvider({
    * BAGIAN INI YANG DIPERBAIKI
    */
   const addExpense = async (
-    data: Omit<
-      Expense,
-      'id' | 'created_at'
-    >
-  ): Promise<Expense | null> => {
-    /*
-     * Ambil user Supabase secara langsung.
-     * Jangan hanya bergantung pada React state.
-     */
-    let authUser:
-      | User
-      | null =
-      session?.user || null;
+  data: Omit<Expense, 'id' | 'created_at'>
+): Promise<Expense | null> => {
+  try {
+    console.log('=== MULAI ADD EXPENSE ===', data);
 
-    if (!authUser) {
-      const {
-        data: sessionData,
-      } =
-        await supabase.auth.getSession();
+    // 1. Ambil user yang benar-benar sedang login
+    const {
+      data: authData,
+      error: authError,
+    } = await supabase.auth.getUser();
 
-      authUser =
-        sessionData.session?.user ||
-        null;
+    if (authError) {
+      throw new Error(`Auth error: ${authError.message}`);
     }
 
-    if (!authUser) {
-      const {
-        data: userData,
-      } =
-        await supabase.auth.getUser();
+    const authUser = authData.user;
 
-      authUser =
-        userData.user || null;
+    if (!authUser) {
+      throw new Error('User belum login. Silakan login ulang.');
     }
 
-    if (!authUser?.id) {
+    console.log('USER:', authUser.id);
+
+    // 2. Cari business milik user
+    const {
+      data: businessData,
+      error: businessError,
+    } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('owner_id', authUser.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (businessError) {
       throw new Error(
-        'Sesi login tidak ditemukan. Silakan login ulang.'
+        `Gagal mengambil business: ${businessError.message}`
       );
     }
+
+    if (!businessData?.id) {
+      throw new Error(
+        'Business tidak ditemukan untuk akun ini.'
+      );
+    }
+
+    console.log('BUSINESS:', businessData.id);
+
+    // 3. Data yang dikirim ke expenses
+    const payload = {
+      business_id: businessData.id,
+      user_id: authUser.id,
+      name: data.name.trim(),
+      amount: Number(data.amount),
+      category: data.category,
+      date: data.date || getTodayDateString(),
+      notes: data.notes?.trim() || null,
+      created_at: new Date().toISOString(),
+    };
+
+    console.log('EXPENSE PAYLOAD:', payload);
+
+    // 4. Insert ke Supabase
+    const {
+      data: created,
+      error: insertError,
+    } = await supabase
+      .from('expenses')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (insertError) {
+      console.error(
+        'SUPABASE EXPENSE ERROR:',
+        insertError
+      );
+
+      throw new Error(
+        `Supabase: ${insertError.message}${
+          insertError.details
+            ? ` | Details: ${insertError.details}`
+            : ''
+        }${
+          insertError.hint
+            ? ` | Hint: ${insertError.hint}`
+            : ''
+        }`
+      );
+    }
+
+    if (!created) {
+      throw new Error(
+        'Supabase tidak mengembalikan data setelah insert.'
+      );
+    }
+
+    console.log(
+      'EXPENSE BERHASIL DISIMPAN:',
+      created
+    );
+
+    // 5. Masukkan ke state supaya langsung muncul di halaman
+    const newExpense: Expense = {
+      id: created.id,
+      business_id: created.business_id,
+      user_id: created.user_id,
+      name: created.name,
+      amount: Number(created.amount || 0),
+      category: created.category as ExpenseCategory,
+      date:
+        created.date ||
+        data.date ||
+        getTodayDateString(),
+      notes: created.notes || undefined,
+      created_at: created.created_at,
+    };
+
+    setExpenses(prev => [newExpense, ...prev]);
+
+    return newExpense;
+
+  } catch (error: any) {
+    console.error(
+      '=== ADD EXPENSE FINAL ERROR ===',
+      error
+    );
+
+    // Lempar lagi supaya ExpensesPage bisa menampilkan error
+    throw error;
+  }
+};
 
     /*
      * Pastikan business milik user yang sedang login.
