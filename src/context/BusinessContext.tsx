@@ -127,15 +127,42 @@ interface BusinessContextType {
   ) => Promise<boolean>;
 }
 
-const DEFAULT_PROFILE: BusinessProfile = {
-  business_name: 'Kedai Saya',
-  owner_name: 'Pemilik Usaha',
-  email: '',
-  phone: '',
-  business_type: 'F&B / Kuliner',
-  address: '',
-  receipt_footer: 'Terima kasih atas kunjungan Anda!',
+const loadSavedProfile = (): BusinessProfile => {
+  try {
+    const saved = localStorage.getItem('bisnisku_profile');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        business_name: parsed.business_name || 'Kedai Saya',
+        owner_name: parsed.owner_name || 'Pemilik Usaha',
+        email: parsed.email || '',
+        phone: parsed.phone || '',
+        business_type: parsed.business_type || 'F&B / Kuliner',
+        address: parsed.address || '',
+        instagram: parsed.instagram || '',
+        logo_url: parsed.logo_url || '',
+        receipt_footer: parsed.receipt_footer || 'Terima kasih atas kunjungan Anda!',
+        supabase_url: parsed.supabase_url || '',
+        supabase_anon_key: parsed.supabase_anon_key || '',
+      };
+    }
+  } catch (e) {
+    // Ignore localStorage parse error
+  }
+  return {
+    business_name: 'Kedai Saya',
+    owner_name: 'Pemilik Usaha',
+    email: '',
+    phone: '',
+    business_type: 'F&B / Kuliner',
+    address: '',
+    instagram: '',
+    logo_url: '',
+    receipt_footer: 'Terima kasih atas kunjungan Anda!',
+  };
 };
+
+const DEFAULT_PROFILE: BusinessProfile = loadSavedProfile();
 
 const BusinessContext =
   createContext<BusinessContextType | undefined>(undefined);
@@ -168,7 +195,7 @@ export function BusinessProvider({
     useState<Business | null>(null);
 
   const [profile, setProfile] =
-    useState<BusinessProfile>(DEFAULT_PROFILE);
+    useState<BusinessProfile>(() => loadSavedProfile());
 
   const [products, setProducts] =
     useState<Product[]>([]);
@@ -734,13 +761,15 @@ export function BusinessProvider({
                     business_name:
                       loaded.name,
                     owner_name:
-                      loaded.owner_name,
+                      loaded.owner_name ||
+                      fallbackOwner,
                     phone: '',
                     email:
                       sbUser.email ||
                       '',
                     business_type:
-                      loaded.business_type,
+                      loaded.business_type ||
+                      'F&B / Kuliner',
                     address: '',
                     receipt_footer:
                       'Terima kasih atas kunjungan Anda!',
@@ -792,7 +821,8 @@ export function BusinessProvider({
                     sbUser.email ||
                     '',
                   business_type:
-                    fallbackLoaded.business_type,
+                    fallbackLoaded.business_type ||
+                    'F&B / Kuliner',
                   address: '',
                   receipt_footer:
                     'Terima kasih atas kunjungan Anda!',
@@ -840,13 +870,15 @@ export function BusinessProvider({
                   business_name:
                     loaded.name,
                   owner_name:
-                    loaded.owner_name,
+                    loaded.owner_name ||
+                    fallbackOwner,
                   phone: '',
                   email:
                     sbUser.email ||
                     '',
                   business_type:
-                    loaded.business_type,
+                    loaded.business_type ||
+                    'F&B / Kuliner',
                   address: '',
                   receipt_footer:
                     'Terima kasih atas kunjungan Anda!',
@@ -1274,10 +1306,18 @@ export function BusinessProvider({
   const updateProfile = async (
     partial: Partial<BusinessProfile>
   ) => {
-    setProfile(prev => ({
-      ...prev,
-      ...partial,
-    }));
+    setProfile(prev => {
+      const updated = {
+        ...prev,
+        ...partial,
+      };
+      try {
+        localStorage.setItem('bisnisku_profile', JSON.stringify(updated));
+      } catch (e) {
+        // localStorage ignore
+      }
+      return updated;
+    });
 
     if (business?.id) {
       try {
@@ -1300,11 +1340,43 @@ export function BusinessProvider({
         }
 
         if (
+          partial.phone !==
+          undefined
+        ) {
+          updateData.phone =
+            partial.phone;
+        }
+
+        if (
           partial.business_type !==
           undefined
         ) {
           updateData.business_type =
             partial.business_type;
+        }
+
+        if (
+          partial.address !==
+          undefined
+        ) {
+          updateData.address =
+            partial.address;
+        }
+
+        if (
+          partial.instagram !==
+          undefined
+        ) {
+          updateData.instagram =
+            partial.instagram;
+        }
+
+        if (
+          partial.receipt_footer !==
+          undefined
+        ) {
+          updateData.receipt_footer =
+            partial.receipt_footer;
         }
 
         if (
@@ -2089,6 +2161,14 @@ export function BusinessProvider({
             ),
           payment_method:
             createdSale.payment_method,
+          subtotal:
+            data.subtotal,
+          discount:
+            data.discount,
+          cash_received:
+            data.cash_received,
+          change_amount:
+            data.change_amount,
           date:
             createdSale.created_at,
           customer_name:

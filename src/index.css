@@ -66,24 +66,47 @@
 
 /* Dedicated Thermal Receipt Print Styles */
 @media print {
+  @page {
+    size: auto;
+    margin: 0;
+  }
+  
+  html, body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
   body * {
     visibility: hidden;
   }
+  
   #printable-thermal-receipt, #printable-thermal-receipt * {
     visibility: visible;
   }
+  
   #printable-thermal-receipt {
     position: absolute;
     left: 0;
     top: 0;
-    width: 80mm !important;
+    width: 100% !important;
     max-width: 80mm !important;
-    padding: 2mm !important;
-    margin: 0 !important;
+    padding: 3mm 4mm !important;
+    margin: 0 auto !important;
     box-shadow: none !important;
-    font-size: 11pt !important;
-    line-height: 1.2 !important;
+    border: none !important;
+    font-size: 10pt !important;
+    line-height: 1.25 !important;
     color: #000000 !important;
     background: #FFFFFF !important;
+  }
+
+  #printable-thermal-receipt.thermal-58mm {
+    max-width: 58mm !important;
+    font-size: 8.5pt !important;
+    padding: 2mm 2.5mm !important;
   }
 }

@@ -46,6 +46,8 @@ export function TransactionsPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qris');
   const [customerName, setCustomerName] = useState('');
   const [transactionNotes, setTransactionNotes] = useState('');
+  const [discountInput, setDiscountInput] = useState<string>('');
+  const [cashReceivedInput, setCashReceivedInput] = useState<string>('');
   const [searchProductQuery, setSearchProductQuery] = useState('');
   const [selectedProductCategory, setSelectedProductCategory] = useState('all');
 
@@ -92,23 +94,38 @@ export function TransactionsPage() {
 
   // POS Cart Calculations
   const cartSummary = useMemo(() => {
-    let totalAmount = 0;
+    let rawSubtotal = 0;
     let totalHpp = 0;
     let totalItems = 0;
 
     cart.forEach(item => {
       const itemSubtotal = item.quantity * item.product.selling_price;
       const itemHppSubtotal = item.quantity * item.product.hpp;
-      totalAmount += itemSubtotal;
+      rawSubtotal += itemSubtotal;
       totalHpp += itemHppSubtotal;
       totalItems += item.quantity;
     });
 
-    const profit = totalAmount - totalHpp;
+    const parsedDiscount = Math.max(0, Number(discountInput) || 0);
+    const totalAmount = Math.max(0, rawSubtotal - parsedDiscount);
+    const profit = Math.max(0, totalAmount - totalHpp);
     const margin = totalAmount > 0 ? Math.round((profit / totalAmount) * 1000) / 10 : 0;
 
-    return { totalAmount, totalHpp, profit, margin, totalItems };
-  }, [cart]);
+    const parsedCash = Number(cashReceivedInput) || 0;
+    const changeAmount = parsedCash >= totalAmount ? parsedCash - totalAmount : 0;
+
+    return {
+      rawSubtotal,
+      discount: parsedDiscount,
+      totalAmount,
+      totalHpp,
+      profit,
+      margin,
+      totalItems,
+      cashReceived: parsedCash,
+      changeAmount,
+    };
+  }, [cart, discountInput, cashReceivedInput]);
 
   // Add product to cart with strict stock limit
   const addToCart = (product: Product) => {
@@ -177,6 +194,8 @@ export function TransactionsPage() {
     setCart([]);
     setCustomerName('');
     setTransactionNotes('');
+    setDiscountInput('');
+    setCashReceivedInput('');
   };
 
   // Submit Transaction safely
@@ -209,10 +228,17 @@ export function TransactionsPage() {
 
       const newTx = await createTransaction({
         items,
+        subtotal: cartSummary.rawSubtotal,
+        discount: cartSummary.discount > 0 ? cartSummary.discount : undefined,
         total_amount: cartSummary.totalAmount,
         total_hpp: cartSummary.totalHpp,
         profit: cartSummary.profit,
         payment_method: paymentMethod,
+        cash_received: paymentMethod === 'cash' && cartSummary.cashReceived > 0 ? cartSummary.cashReceived : undefined,
+        change_amount:
+          paymentMethod === 'cash' && cartSummary.cashReceived >= cartSummary.totalAmount
+            ? cartSummary.changeAmount
+            : undefined,
         date: new Date().toISOString(),
         customer_name: customerName.trim() || undefined,
         notes: transactionNotes.trim() || undefined,
@@ -687,14 +713,101 @@ export function TransactionsPage() {
                   </div>
                 </div>
 
+                {/* Optional Discount Input */}
+                <div>
+                  <label className="block text-[11px] font-medium text-[#8A8A91] mb-1">
+                    Diskon Transaksi (Opsional)
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#8A8A91]">Rp</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="500"
+                      placeholder="0"
+                      value={discountInput}
+                      onChange={e => setDiscountInput(e.target.value)}
+                      className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
+                    />
+                  </div>
+                </div>
+
+                {/* Cash Payment Details (When Cash is Selected) */}
+                {paymentMethod === 'cash' && (
+                  <div className="p-2.5 rounded-lg bg-[#141416] border border-[#242428] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-medium text-[#8A8A91]">
+                        Uang Tunai Diterima:
+                      </label>
+                      {cartSummary.cashReceived > 0 && (
+                        <span className="text-[11px] text-[#8A8A91]">
+                          Kembalian:{' '}
+                          <strong className="text-[#22C55E] font-semibold tabular-nums">
+                            {formatRupiah(cartSummary.changeAmount)}
+                          </strong>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#8A8A91]">Rp</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        placeholder={`Minimal ${formatRupiah(cartSummary.totalAmount)}`}
+                        value={cashReceivedInput}
+                        onChange={e => setCashReceivedInput(e.target.value)}
+                        className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
+                      />
+                    </div>
+
+                    {/* Quick Cash Buttons */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => setCashReceivedInput(String(cartSummary.totalAmount))}
+                        className="px-2 py-0.5 rounded bg-[#1C1C20] hover:bg-[#252525] border border-[#242428] text-[10px] text-[#F5F5F5] font-medium transition-colors"
+                      >
+                        Uang Pas
+                      </button>
+                      {[10000, 20000, 50000, 100000].map(val => {
+                        if (val >= cartSummary.totalAmount || val === 50000 || val === 100000) {
+                          return (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => setCashReceivedInput(String(val))}
+                              className="px-2 py-0.5 rounded bg-[#1C1C20] hover:bg-[#252525] border border-[#242428] text-[10px] text-[#8A8A91] hover:text-[#F5F5F5] transition-colors"
+                            >
+                              {val / 1000}rb
+                            </button>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Subtotal & Profit preview */}
                 <div className="p-2.5 rounded-lg bg-[#1C1C20] border border-[#242428] space-y-1 text-xs">
                   <div className="flex justify-between text-[#8A8A91]">
-                    <span>Subtotal Penjualan</span>
-                    <span className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(cartSummary.totalAmount)}</span>
+                    <span>Subtotal Barang</span>
+                    <span className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(cartSummary.rawSubtotal)}</span>
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#8A8A91]">
-                    <span>Estimasi Laba Kotor</span>
+                  {cartSummary.discount > 0 && (
+                    <div className="flex justify-between text-red-400">
+                      <span>Diskon</span>
+                      <span className="tabular-nums">-{formatRupiah(cartSummary.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[#F5F5F5] font-bold pt-0.5 border-t border-[#242428]">
+                    <span>Total Bayar</span>
+                    <span className="text-[#22C55E] tabular-nums">{formatRupiah(cartSummary.totalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-[#8A8A91] pt-0.5">
+                    <span>Estimasi Laba Bersih Transaksi</span>
                     <span className="text-[#22C55E] font-medium tabular-nums">
                       +{formatRupiah(cartSummary.profit)} ({cartSummary.margin}%)
                     </span>

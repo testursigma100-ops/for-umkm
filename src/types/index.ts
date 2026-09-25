@@ -68,6 +68,10 @@ export interface Sale {
   gross_profit: number;
   profit: number; // UI compatibility (alias of gross_profit)
   payment_method: PaymentMethod;
+  subtotal?: number;
+  discount?: number;
+  cash_received?: number;
+  change_amount?: number;
   date: string; // UI compatibility (alias of created_at / transaction_date)
   customer_name?: string;
   notes?: string;
@@ -84,6 +88,10 @@ export interface CreateTransactionPayload {
   total_hpp: number;
   profit: number;
   payment_method: PaymentMethod;
+  subtotal?: number;
+  discount?: number;
+  cash_received?: number;
+  change_amount?: number;
   date?: string;
   customer_name?: string;
   notes?: string;
