@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Transaction, BusinessProfile } from '../../types';
 import { formatRupiah, formatDateTime } from '../../utils/formatters';
-import html2canvas from 'html2canvas';
+import { renderReceiptToCanvas, canvasToBlob } from '../../utils/receiptCanvas';
 import {
   Printer,
   Download,
@@ -11,8 +11,6 @@ import {
   Loader2,
   Copy,
   Receipt as ReceiptIcon,
-  Smartphone,
-  ExternalLink,
 } from 'lucide-react';
 
 interface ReceiptModalProps {
@@ -23,45 +21,70 @@ interface ReceiptModalProps {
 }
 
 export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptModalProps) {
-  const receiptRef = useRef<HTMLDivElement>(null);
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
   const [paperWidth, setPaperWidth] = useState<'80mm' | '58mm'>('80mm');
+  const [receiptImgSrc, setReceiptImgSrc] = useState<string>('');
   const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'info' } | null>(null);
+
+  // Store active canvas in ref
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const businessName = (profile.business_name || 'BisnisKu').trim();
+
+  // Render Canvas as the single source of truth
+  useEffect(() => {
+    if (!isOpen || !transaction) {
+      setReceiptImgSrc('');
+      canvasRef.current = null;
+      return;
+    }
+
+    let isMounted = true;
+    setIsGenerating(true);
+
+    renderReceiptToCanvas(transaction, profile, { paperWidth, scale: 2 })
+      .then(canvas => {
+        if (!isMounted) return;
+        canvasRef.current = canvas;
+        const dataUrl = canvas.toDataURL('image/png');
+        setReceiptImgSrc(dataUrl);
+        setIsGenerating(false);
+      })
+      .catch(err => {
+        console.error('Error rendering receipt canvas:', err);
+        if (isMounted) setIsGenerating(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, transaction, profile, paperWidth]);
 
   if (!isOpen || !transaction) return null;
 
-  // Real store identity from Business Profile (NEVER hardcoded)
-  const businessName = profile.business_name?.trim() || 'BisnisKu';
-  const paymentMethodLabel =
-    transaction.payment_method === 'cash'
-      ? 'Tunai'
-      : transaction.payment_method === 'qris'
-      ? 'QRIS'
-      : transaction.payment_method === 'transfer'
-      ? 'Transfer Bank'
-      : 'Lainnya';
+  // Format textual receipt strictly for clipboard & WhatsApp fallback
+  const getReceiptFormattedText = () => {
+    const paymentMethodLabel =
+      transaction.payment_method === 'cash'
+        ? 'Tunai'
+        : transaction.payment_method === 'qris'
+        ? 'QRIS'
+        : transaction.payment_method === 'transfer'
+        ? 'Transfer Bank'
+        : 'Lainnya';
 
-  // Financial details
-  const subtotalAmount =
-    transaction.subtotal !== undefined
-      ? transaction.subtotal
-      : Array.isArray(transaction.items) && transaction.items.length > 0
-      ? transaction.items.reduce((sum, item) => sum + Number(item.subtotal || item.quantity * item.unit_price), 0)
-      : transaction.total_amount;
+    const discountAmount = transaction.discount || 0;
+    const subtotalAmount =
+      transaction.subtotal ||
+      (discountAmount > 0 ? transaction.total_amount + discountAmount : transaction.total_amount);
 
-  const discountAmount = transaction.discount || 0;
-  const totalAmount = transaction.total_amount;
-  const cashReceived = transaction.cash_received;
-  const changeAmount = transaction.change_amount;
-
-  // Format text representation for clipboard / WhatsApp fallback
-  const generateReceiptText = () => {
     let text = `================================\n`;
     text += `*${businessName.toUpperCase()}*\n`;
     if (profile.address) text += `${profile.address}\n`;
-    if (profile.phone) text += `Telp: ${profile.phone}\n`;
+    if (profile.phone) text += `Telp/WA: ${profile.phone}\n`;
     if (profile.instagram) text += `IG: @${profile.instagram.replace('@', '')}\n`;
     text += `================================\n`;
     text += `No. Nota : ${transaction.invoice_number}\n`;
@@ -83,11 +106,15 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
       text += `Subtotal : ${formatRupiah(subtotalAmount)}\n`;
       text += `Diskon   : -${formatRupiah(discountAmount)}\n`;
     }
-    text += `*TOTAL    : ${formatRupiah(totalAmount)}*\n`;
+    text += `*TOTAL    : ${formatRupiah(transaction.total_amount)}*\n`;
 
-    if (transaction.payment_method === 'cash' && cashReceived !== undefined && cashReceived > 0) {
-      text += `Bayar    : ${formatRupiah(cashReceived)}\n`;
-      text += `Kembali  : ${formatRupiah(changeAmount !== undefined ? changeAmount : Math.max(0, cashReceived - totalAmount))}\n`;
+    if (transaction.payment_method === 'cash' && transaction.cash_received) {
+      text += `Bayar    : ${formatRupiah(transaction.cash_received)}\n`;
+      const change =
+        transaction.change_amount !== undefined
+          ? transaction.change_amount
+          : Math.max(0, transaction.cash_received - transaction.total_amount);
+      text += `Kembali  : ${formatRupiah(change)}\n`;
     }
 
     text += `================================\n`;
@@ -96,63 +123,58 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
     return text;
   };
 
-  // Helper to rasterize receipt into Canvas and return blob
-  const rasterizeReceiptToBlob = async (): Promise<Blob | null> => {
-    if (!receiptRef.current) return null;
-    const canvas = await html2canvas(receiptRef.current, {
-      scale: 3, // High DPI / Crisp raster image rendering
-      backgroundColor: '#FFFFFF',
-      logging: false,
-      useCORS: true,
-      allowTaint: true,
-    });
-
-    return new Promise(resolve => {
-      canvas.toBlob(blob => resolve(blob), 'image/png', 0.95);
-    });
-  };
-
-  // 1. ACTION: SIMPAN SEBAGAI GAMBAR (Direct PNG Download)
+  // 1. Simpan Gambar PNG langsung dari Canvas
   const handleSaveImage = async () => {
-    if (!receiptRef.current) return;
-    setIsGeneratingImage(true);
-    try {
-      const blob = await rasterizeReceiptToBlob();
-      if (!blob) throw new Error('Gagal merender gambar canvas.');
+    if (!canvasRef.current || isSaving) return;
+    setIsSaving(true);
 
+    try {
+      const blob = await canvasToBlob(canvasRef.current);
+      const fileName = `Struk_${transaction.invoice_number || Date.now()}.png`;
+
+      // Trigger standard HTML5 file download
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Struk_${transaction.invoice_number || Date.now()}.png`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      setFeedbackMsg({ text: 'Gambar struk (PNG) berhasil disimpan!', type: 'success' });
-      setTimeout(() => setFeedbackMsg(null), 3000);
+      setFeedbackMsg({ text: 'Gambar struk PNG berhasil diunduh!', type: 'success' });
     } catch (err) {
-      console.error('Error generating receipt image:', err);
-      setFeedbackMsg({ text: 'Gagal membuat gambar struk.', type: 'info' });
-      setTimeout(() => setFeedbackMsg(null), 3000);
+      console.error('Save image error:', err);
+      // Fallback using DataURL
+      if (receiptImgSrc) {
+        const link = document.createElement('a');
+        link.href = receiptImgSrc;
+        link.download = `Struk_${transaction.invoice_number || Date.now()}.png`;
+        link.click();
+        setFeedbackMsg({ text: 'Gambar struk PNG berhasil diunduh!', type: 'success' });
+      } else {
+        setFeedbackMsg({ text: 'Gagal mengunduh gambar struk.', type: 'info' });
+      }
     } finally {
-      setIsGeneratingImage(false);
+      setIsSaving(false);
+      setTimeout(() => setFeedbackMsg(null), 3000);
     }
   };
 
-  // 2. ACTION: BAGIKAN (Web Share API as PNG File with safe fallback)
+  // 2. Bagikan Gambar via Web Share API (File PNG)
   const handleShare = async () => {
-    if (!receiptRef.current) return;
+    if (!canvasRef.current || isSharing) return;
     setIsSharing(true);
 
     try {
-      const blob = await rasterizeReceiptToBlob();
-      const fileName = `Struk_${transaction.invoice_number || 'receipt'}.png`;
-      const receiptText = generateReceiptText();
+      const blob = await canvasToBlob(canvasRef.current);
+      const fileName = `Struk_${transaction.invoice_number || Date.now()}.png`;
+      const receiptText = getReceiptFormattedText();
 
-      let sharedAsFile = false;
+      let sharedSuccess = false;
 
-      if (blob && navigator.canShare) {
+      // Web Share API File support check
+      if (navigator.canShare) {
         const file = new File([blob], fileName, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
@@ -160,30 +182,28 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
             text: `Struk pembelian di ${businessName} (${transaction.invoice_number})`,
             files: [file],
           });
-          sharedAsFile = true;
+          sharedSuccess = true;
           setFeedbackMsg({ text: 'Struk berhasil dibagikan!', type: 'success' });
         }
       }
 
-      if (!sharedAsFile) {
-        // Fallback: Copy text + download PNG image + open WhatsApp
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-        }
+      // Safe Fallback: Download PNG + copy text + open WhatsApp
+      if (!sharedSuccess) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
         await navigator.clipboard.writeText(receiptText);
         setCopiedText(true);
         setTimeout(() => setCopiedText(false), 3000);
 
         setFeedbackMsg({
-          text: 'Gambar struk diunduh & teks disalin ke clipboard untuk dibagikan!',
+          text: 'Gambar struk diunduh & teks struk disalin ke clipboard!',
           type: 'info',
         });
 
@@ -192,12 +212,11 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
-        // Copy text fallback
-        const receiptText = generateReceiptText();
+        const receiptText = getReceiptFormattedText();
         navigator.clipboard.writeText(receiptText);
         setCopiedText(true);
         setTimeout(() => setCopiedText(false), 3000);
-        setFeedbackMsg({ text: 'Teks struk berhasil disalin ke clipboard.', type: 'success' });
+        setFeedbackMsg({ text: 'Teks struk disalin ke clipboard.', type: 'success' });
       }
     } finally {
       setIsSharing(false);
@@ -205,14 +224,14 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
     }
   };
 
-  // 3. ACTION: CETAK (Thermal Print Compact 58mm/80mm)
+  // 3. Cetak thermal
   const handlePrint = () => {
     window.print();
   };
 
-  // 4. ACTION: SALIN TEKS
+  // 4. Salin teks
   const handleCopyText = () => {
-    const text = generateReceiptText();
+    const text = getReceiptFormattedText();
     navigator.clipboard.writeText(text);
     setCopiedText(true);
     setFeedbackMsg({ text: 'Teks struk berhasil disalin!', type: 'success' });
@@ -233,9 +252,9 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
               Struk Transaksi Kasir
             </h3>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            {/* Paper Width Selector */}
+            {/* Thermal Paper Width Switcher */}
             <div className="flex items-center bg-[#1C1C1E] border border-[#252525] rounded-md p-0.5 text-[10px]">
               <button
                 type="button"
@@ -279,162 +298,24 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
           </div>
         )}
 
-        {/* Scrollable Receipt Canvas Preview Area */}
-        <div className="p-4 overflow-y-auto flex-1 flex justify-center bg-[#0B0B0C]">
-          {/* Authentic Portrait Thermal Raster View (Exact 576px / 384px raster equivalent) */}
-          <div
-            ref={receiptRef}
-            id="printable-thermal-receipt"
-            className={`w-full bg-white text-black font-mono text-[11px] leading-tight shadow-lg select-text transition-all ${
-              paperWidth === '58mm'
-                ? 'max-w-[270px] p-4 text-[10px] thermal-58mm'
-                : 'max-w-[340px] p-5 text-[11px]'
-            }`}
-          >
-            {/* Store Logo & Header */}
-            <div className="text-center space-y-1 mb-2.5">
-              {profile.logo_url && (
-                <div className="flex justify-center pb-1">
-                  <img
-                    src={profile.logo_url}
-                    alt="Logo Usaha"
-                    crossOrigin="anonymous"
-                    className="max-h-12 max-w-[120px] object-contain filter grayscale contrast-125"
-                  />
-                </div>
-              )}
-
-              <h2 className="text-sm font-bold tracking-tight uppercase leading-snug break-words">
-                {businessName}
-              </h2>
-
-              {profile.address && (
-                <p className="text-[10px] text-gray-700 leading-tight break-words">
-                  {profile.address}
-                </p>
-              )}
-
-              {profile.phone && (
-                <p className="text-[10px] text-gray-700">
-                  Telp/WA: {profile.phone}
-                </p>
-              )}
-
-              {profile.instagram && (
-                <p className="text-[10px] text-gray-700">
-                  IG: @{profile.instagram.replace('@', '')}
-                </p>
-              )}
+        {/* Canvas Image Preview Area */}
+        <div className="p-4 overflow-y-auto flex-1 flex flex-col items-center justify-center bg-[#0B0B0C]">
+          {isGenerating && !receiptImgSrc ? (
+            <div className="py-16 flex flex-col items-center justify-center gap-2 text-xs text-[#8A8A8A]">
+              <Loader2 className="w-6 h-6 animate-spin text-[#22C55E]" />
+              <span>Membuat struk gambar canvas...</span>
             </div>
-
-            <div className="border-t border-dashed border-gray-400 my-2" />
-
-            {/* Transaction Metadata */}
-            <div className="space-y-0.5 text-[10px] text-gray-800">
-              <div className="flex justify-between">
-                <span>No. Nota:</span>
-                <span className="font-semibold">{transaction.invoice_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Waktu:</span>
-                <span>{formatDateTime(transaction.created_at || transaction.date)}</span>
-              </div>
-              {transaction.customer_name && (
-                <div className="flex justify-between">
-                  <span>Pelanggan:</span>
-                  <span className="font-medium">{transaction.customer_name}</span>
-                </div>
-              )}
-              {transaction.notes && (
-                <div className="flex justify-between">
-                  <span>Catatan:</span>
-                  <span>{transaction.notes}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span>Pembayaran:</span>
-                <span className="font-semibold">{paymentMethodLabel}</span>
-              </div>
+          ) : receiptImgSrc ? (
+            <div id="printable-thermal-receipt" className="flex justify-center w-full">
+              <img
+                src={receiptImgSrc}
+                alt={`Struk ${transaction.invoice_number}`}
+                className={`w-full shadow-2xl rounded-xs bg-white transition-all ${
+                  paperWidth === '58mm' ? 'max-w-[270px]' : 'max-w-[340px]'
+                }`}
+              />
             </div>
-
-            <div className="border-t border-dashed border-gray-400 my-2" />
-
-            {/* Product Items Table */}
-            <div className="space-y-1.5 py-0.5">
-              {Array.isArray(transaction.items) && transaction.items.length > 0 ? (
-                transaction.items.map((item, idx) => (
-                  <div key={idx} className="space-y-0.5">
-                    <div className="font-semibold text-gray-900 break-words">
-                      {item.product_name}
-                    </div>
-                    <div className="flex justify-between text-[10px] text-gray-700 pl-1">
-                      <span>
-                        {item.quantity} x {formatRupiah(item.unit_price)}
-                      </span>
-                      <span className="font-medium text-gray-900 tabular-nums">
-                        {formatRupiah(item.subtotal || item.quantity * item.unit_price)}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex justify-between">
-                  <span>Total Transaksi</span>
-                  <span>{formatRupiah(transaction.total_amount)}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-dashed border-gray-400 my-2" />
-
-            {/* Financial Summary Calculation */}
-            <div className="space-y-1 text-[11px]">
-              {discountAmount > 0 && (
-                <>
-                  <div className="flex justify-between text-[10px] text-gray-700">
-                    <span>Subtotal:</span>
-                    <span className="tabular-nums">{formatRupiah(subtotalAmount)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-red-600">
-                    <span>Diskon:</span>
-                    <span className="tabular-nums">-{formatRupiah(discountAmount)}</span>
-                  </div>
-                </>
-              )}
-
-              <div className="flex justify-between text-xs font-bold pt-0.5">
-                <span>TOTAL:</span>
-                <span className="tabular-nums">{formatRupiah(totalAmount)}</span>
-              </div>
-
-              {transaction.payment_method === 'cash' && cashReceived !== undefined && cashReceived > 0 && (
-                <>
-                  <div className="flex justify-between text-[10px] text-gray-700 pt-0.5">
-                    <span>Tunai:</span>
-                    <span className="tabular-nums">{formatRupiah(cashReceived)}</span>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-gray-800 font-semibold">
-                    <span>Kembalian:</span>
-                    <span className="tabular-nums">
-                      {formatRupiah(changeAmount !== undefined ? changeAmount : Math.max(0, cashReceived - totalAmount))}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="border-t border-dashed border-gray-400 my-2.5" />
-
-            {/* Custom Store Footer Message */}
-            <div className="text-center text-[10px] text-gray-600 space-y-0.5 pt-0.5">
-              <p className="font-medium break-words">
-                {profile.receipt_footer || 'Terima kasih atas kunjungan Anda!'}
-              </p>
-              <p className="text-[8px] text-gray-400 pt-1">
-                Dicatat via BisnisKu
-              </p>
-            </div>
-          </div>
+          ) : null}
         </div>
 
         {/* Action Controls Bar */}
@@ -443,14 +324,14 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
             {/* 1. Simpan sebagai Gambar (PNG) */}
             <button
               type="button"
-              disabled={isGeneratingImage || isSharing}
+              disabled={isSaving || isGenerating}
               onClick={handleSaveImage}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#252525] text-[#F5F5F5] rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#252525] text-[#F5F5F5] rounded-lg text-xs font-medium transition-colors disabled:opacity-50 active:scale-[0.98]"
             >
-              {isGeneratingImage ? (
+              {isSaving ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-[#22C55E]" />
-                  <span>Merender PNG...</span>
+                  <span>Mengunduh...</span>
                 </>
               ) : (
                 <>
@@ -460,11 +341,11 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
               )}
             </button>
 
-            {/* 2. Cetak Struk (Thermal 58mm/80mm) */}
+            {/* 2. Cetak Struk (Thermal) */}
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#252525] text-[#F5F5F5] rounded-lg text-xs font-medium transition-colors"
+              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#252525] text-[#F5F5F5] rounded-lg text-xs font-medium transition-colors active:scale-[0.98]"
             >
               <Printer className="w-3.5 h-3.5 text-[#22C55E]" />
               <span>Cetak Struk</span>
@@ -472,12 +353,12 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            {/* 3. Bagikan Struk (PNG Image via Web Share API) */}
+            {/* 3. Bagikan Gambar */}
             <button
               type="button"
-              disabled={isSharing || isGeneratingImage}
+              disabled={isSharing || isGenerating}
               onClick={handleShare}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] rounded-lg text-xs font-semibold transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 active:scale-[0.98]"
             >
               {isSharing ? (
                 <>
@@ -496,7 +377,7 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
             <button
               type="button"
               onClick={handleCopyText}
-              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#252525] text-[#8A8A8A] hover:text-[#F5F5F5] rounded-lg text-xs font-medium transition-colors"
+              className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1F1F1F] hover:bg-[#282828] border border-[#252525] text-[#8A8A8A] hover:text-[#F5F5F5] rounded-lg text-xs font-medium transition-colors active:scale-[0.98]"
             >
               {copiedText ? (
                 <>
