@@ -1471,24 +1471,18 @@ export function BusinessProvider({
       );
     }
 
-    let currentBiz:
-      | Business
-      | null =
-      business;
+    const { data: freshBiz } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('owner_id', authUser.id)
+      .maybeSingle();
 
-    if (
-      !currentBiz?.id ||
-      currentBiz.owner_id !==
-        authUser.id
-    ) {
-      currentBiz =
-        await loadOrCreateUserBusiness(
-          authUser
-        );
+    let bizId = freshBiz?.id;
+
+    if (!bizId) {
+      const createdBiz = await loadOrCreateUserBusiness(authUser);
+      bizId = createdBiz?.id;
     }
-
-    const bizId =
-      currentBiz?.id;
 
     if (!bizId) {
       throw new Error(
