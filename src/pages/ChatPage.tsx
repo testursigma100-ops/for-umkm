@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useBusiness } from '../context/BusinessContext';
 import { ChatMessage } from '../types';
 import { supabase, getSupabaseConfig } from '../lib/supabase';
+import { getApiBaseUrl } from '../lib/api';
 import {
   Send,
   BotMessageSquare,
@@ -377,7 +378,8 @@ export function ChatPage() {
       if (cfg.url) headers['x-supabase-url'] = cfg.url;
       if (cfg.anonKey) headers['x-supabase-anon-key'] = cfg.anonKey;
 
-      const res = await fetch('/api/chat?stream=true', {
+      const baseUrl = getApiBaseUrl();
+      const res = await fetch(`${baseUrl}/api/chat?stream=true`, {
         method: 'POST',
         headers,
         signal: controller.signal,

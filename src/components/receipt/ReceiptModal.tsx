@@ -1,4 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Transaction, BusinessProfile } from '../../types';
 import { formatRupiah, formatDateTime } from '../../utils/formatters';
 import { renderReceiptToCanvas, canvasToBlob } from '../../utils/receiptCanvas';
@@ -123,16 +126,60 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
     return text;
   };
 
+  // Helper to save base64 image to native cache & get file URI
+  const getNativeImageUri = async (canvas: HTMLCanvasElement, fileName: string) => {
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64Data = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+    await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Cache,
+    });
+
+    const uriResult = await Filesystem.getUri({
+      path: fileName,
+      directory: Directory.Cache,
+    });
+
+    return uriResult.uri;
+  };
+
   // 1. Simpan Gambar PNG langsung dari Canvas
   const handleSaveImage = async () => {
     if (!canvasRef.current || isSaving) return;
     setIsSaving(true);
 
     try {
-      const blob = await canvasToBlob(canvasRef.current);
       const fileName = `Struk_${transaction.invoice_number || Date.now()}.png`;
 
-      // Trigger standard HTML5 file download
+      // Native Capacitor Android Save Flow
+      if (Capacitor.isNativePlatform()) {
+        const dataUrl = canvasRef.current.toDataURL('image/png');
+        const base64Data = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+        await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache,
+        });
+
+        const fileUri = await getNativeImageUri(canvasRef.current, fileName);
+
+        // Share/save via native share sheet or cache
+        await Share.share({
+          title: `Simpan Struk - ${businessName}`,
+          text: `Struk pembelian (${transaction.invoice_number})`,
+          url: fileUri,
+          dialogTitle: 'Simpan Gambar Struk',
+        });
+
+        setFeedbackMsg({ text: 'Gambar struk berhasil disimpan!', type: 'success' });
+        return;
+      }
+
+      // Standard Web Browser Download
+      const blob = await canvasToBlob(canvasRef.current);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -145,15 +192,14 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
       setFeedbackMsg({ text: 'Gambar struk PNG berhasil diunduh!', type: 'success' });
     } catch (err) {
       console.error('Save image error:', err);
-      // Fallback using DataURL
-      if (receiptImgSrc) {
+      if (receiptImgSrc && !Capacitor.isNativePlatform()) {
         const link = document.createElement('a');
         link.href = receiptImgSrc;
         link.download = `Struk_${transaction.invoice_number || Date.now()}.png`;
         link.click();
         setFeedbackMsg({ text: 'Gambar struk PNG berhasil diunduh!', type: 'success' });
       } else {
-        setFeedbackMsg({ text: 'Gagal mengunduh gambar struk.', type: 'info' });
+        setFeedbackMsg({ text: 'Gagal menyimpan gambar struk.', type: 'info' });
       }
     } finally {
       setIsSaving(false);
@@ -161,19 +207,34 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
     }
   };
 
-  // 2. Bagikan Gambar via Web Share API (File PNG)
+  // 2. Bagikan Gambar via Web Share API / Native Capacitor Share
   const handleShare = async () => {
     if (!canvasRef.current || isSharing) return;
     setIsSharing(true);
 
     try {
-      const blob = await canvasToBlob(canvasRef.current);
       const fileName = `Struk_${transaction.invoice_number || Date.now()}.png`;
       const receiptText = getReceiptFormattedText();
 
-      let sharedSuccess = false;
+      // Native Capacitor Android Share Flow
+      if (Capacitor.isNativePlatform()) {
+        const fileUri = await getNativeImageUri(canvasRef.current, fileName);
 
-      // Web Share API File support check
+        await Share.share({
+          title: `Struk Transaksi - ${businessName}`,
+          text: `Struk pembelian di ${businessName} (${transaction.invoice_number})`,
+          url: fileUri,
+          dialogTitle: 'Bagikan Struk Transaksi',
+        });
+
+        setFeedbackMsg({ text: 'Struk berhasil dibagikan!', type: 'success' });
+        return;
+      }
+
+      // Standard Web Browser Share Flow
+      let sharedSuccess = false;
+      const blob = await canvasToBlob(canvasRef.current);
+
       if (navigator.canShare) {
         const file = new File([blob], fileName, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
@@ -225,7 +286,24 @@ export function ReceiptModal({ isOpen, onClose, transaction, profile }: ReceiptM
   };
 
   // 3. Cetak thermal
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    if (Capacitor.isNativePlatform() && canvasRef.current) {
+      try {
+        const fileName = `Struk_${transaction.invoice_number || Date.now()}.png`;
+        const fileUri = await getNativeImageUri(canvasRef.current, fileName);
+
+        await Share.share({
+          title: `Cetak Struk - ${businessName}`,
+          url: fileUri,
+          dialogTitle: 'Pilih Layanan Cetak / Aplikasi',
+        });
+      } catch (err) {
+        console.error('Native print share error:', err);
+        window.print();
+      }
+      return;
+    }
+
     window.print();
   };
 
