@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { GoogleGenAI } from '@google/genai';
 import { createClient } from '@supabase/supabase-js';
 import path from 'path';
@@ -12,6 +13,32 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configure CORS specifically for Capacitor Android / Web origins
+const allowedOrigins = [
+  'http://localhost',
+  'capacitor://localhost',
+  'https://localhost',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://bisnisku.up.railway.app',
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost') || origin.startsWith('capacitor://')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Fallback allow to prevent breaking mobile webviews
+    },
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-supabase-url', 'x-supabase-anon-key'],
+    credentials: true,
+  })
+);
 
 app.use(express.json({ limit: '10mb' }));
 
