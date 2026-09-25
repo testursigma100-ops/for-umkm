@@ -17,8 +17,8 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Prevent unintended link-like cursor or pointer behavior on generic texts */
-  h1, h2, h3, h4, h5, h6, label, th {
+  /* Prevent unintended link-like cursor or accidental Google search popups on standard UI text */
+  h1, h2, h3, h4, h5, h6, label, th, .no-select {
     cursor: default;
     user-select: none;
     -webkit-user-select: none;
@@ -30,7 +30,7 @@
     -webkit-user-select: none;
   }
 
-  /* Explicitly allow selection on inputs, textareas, and editable text */
+  /* Explicitly allow selection on inputs, textareas, and designated content */
   input, textarea, [contenteditable="true"], .allow-select, .selectable-content {
     cursor: text;
     user-select: text !important;
@@ -43,23 +43,47 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Clean, unobtrusive scrollbars */
+/* Clean, compact scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: #0B0B0C;
 }
 ::-webkit-scrollbar-thumb {
-  background: #242428;
-  border-radius: 3px;
+  background: #252525;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #323238;
+  background: #333333;
 }
 
 /* Mobile safe area utility */
 .pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+
+/* Dedicated Thermal Receipt Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-thermal-receipt, #printable-thermal-receipt * {
+    visibility: visible;
+  }
+  #printable-thermal-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 2mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    font-size: 11pt !important;
+    line-height: 1.2 !important;
+    color: #000000 !important;
+    background: #FFFFFF !important;
+  }
 }

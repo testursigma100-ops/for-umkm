@@ -18,13 +18,13 @@ export function StatCard({ title, value, subtitle, icon, trend, highlight }: Sta
     <div
       className={`p-4 rounded-xl border transition-all ${
         highlight
-          ? 'bg-[#141416] border-[#242428]'
-          : 'bg-[#141416] border-[#242428]'
+          ? 'bg-[#151515] border-[#252525]'
+          : 'bg-[#151515] border-[#252525]'
       }`}
     >
-      <div className="flex items-center justify-between text-xs text-[#8A8A91] mb-2 font-medium">
+      <div className="flex items-center justify-between text-xs text-[#8A8A8A] mb-2 font-medium">
         <span className="truncate">{title}</span>
-        {icon && <span className="shrink-0 text-[#8A8A91]">{icon}</span>}
+        {icon && <span className="shrink-0 text-[#8A8A8A]">{icon}</span>}
       </div>
 
       <div className="text-xl sm:text-2xl font-bold tracking-tight text-[#F5F5F5] mb-1 tabular-nums">
@@ -32,7 +32,7 @@ export function StatCard({ title, value, subtitle, icon, trend, highlight }: Sta
       </div>
 
       {(subtitle || trend) && (
-        <div className="flex items-center gap-1.5 text-xs text-[#8A8A91]">
+        <div className="flex items-center gap-1.5 text-xs text-[#8A8A8A]">
           {trend && (
             <span
               className={`font-semibold tabular-nums ${
@@ -42,9 +42,9 @@ export function StatCard({ title, value, subtitle, icon, trend, highlight }: Sta
               {trend.value}
             </span>
           )}
-          {trend && trend.label && <span className="text-[#8A8A91]">·</span>}
-          {trend && trend.label && <span className="text-[#8A8A91]">{trend.label}</span>}
-          {subtitle && !trend && <span className="truncate text-[#8A8A91]">{subtitle}</span>}
+          {trend && trend.label && <span className="text-[#8A8A8A]">·</span>}
+          {trend && trend.label && <span className="text-[#8A8A8A]">{trend.label}</span>}
+          {subtitle && !trend && <span className="truncate text-[#8A8A8A]">{subtitle}</span>}
         </div>
       )}
     </div>

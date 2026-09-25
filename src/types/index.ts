@@ -132,6 +132,8 @@ export interface BusinessProfile {
   phone: string;
   business_type: string;
   address: string;
+  instagram?: string;
+  logo_url?: string;
   receipt_footer: string;
   supabase_url?: string;
   supabase_anon_key?: string;

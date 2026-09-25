@@ -3,14 +3,13 @@ import { useBusiness } from '../context/BusinessContext';
 import { Product, PaymentMethod, Transaction } from '../types';
 import { formatRupiah, formatDateTime, getTodayDateString } from '../utils/formatters';
 import { Modal } from '../components/common/Modal';
+import { ReceiptModal } from '../components/receipt/ReceiptModal';
 import {
   Search,
   Receipt,
   ShoppingCart,
   Trash2,
   CheckCircle2,
-  Share2,
-  Printer,
   DollarSign,
   CreditCard,
   QrCode,
@@ -865,101 +864,13 @@ export function TransactionsPage() {
         </div>
       )}
 
-      {/* Digital Receipt / Struk Modal */}
-      {receiptTx && (
-        <Modal
-          isOpen={true}
-          onClose={() => setReceiptTx(null)}
-          title="Struk Penjualan Digital"
-          subtitle={receiptTx.invoice_number}
-          maxWidth="sm"
-        >
-          <div className="space-y-4 text-xs">
-            {/* Business header */}
-            <div className="text-center pb-3 border-b border-[#242428] space-y-0.5">
-              <h4 className="font-bold text-sm text-[#F5F5F5]">{profile.business_name || 'Kedai UMKM'}</h4>
-              <p className="text-[11px] text-[#8A8A91]">{profile.address || 'Kedai F&B'}</p>
-              {profile.phone && <p className="text-[10px] text-[#8A8A91]">Telp/WA: {profile.phone}</p>}
-            </div>
-
-            {/* Meta */}
-            <div className="space-y-1 text-[#8A8A91] text-[11px]">
-              <div className="flex justify-between">
-                <span>No. Nota:</span>
-                <span className="font-mono text-[#F5F5F5]">{receiptTx.invoice_number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Waktu:</span>
-                <span className="text-[#F5F5F5] tabular-nums">{formatDateTime(receiptTx.date)}</span>
-              </div>
-              {receiptTx.customer_name && (
-                <div className="flex justify-between">
-                  <span>Pelanggan:</span>
-                  <span className="text-[#F5F5F5]">{receiptTx.customer_name}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span>Metode:</span>
-                <span className="uppercase text-[#F5F5F5] font-semibold">{receiptTx.payment_method}</span>
-              </div>
-            </div>
-
-            {/* Items */}
-            <div className="py-2 border-y border-[#242428] divide-y divide-[#242428]/50">
-              {receiptTx.items.map((item, idx) => (
-                <div key={idx} className="py-1.5 flex justify-between">
-                  <div>
-                    <p className="font-medium text-[#F5F5F5]">{item.product_name}</p>
-                    <p className="text-[10px] text-[#8A8A91] tabular-nums">
-                      {item.quantity} x {formatRupiah(item.unit_price)}
-                    </p>
-                  </div>
-                  <span className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(item.subtotal)}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Totals */}
-            <div className="space-y-1 pt-1">
-              <div className="flex justify-between text-sm font-bold text-[#F5F5F5]">
-                <span>Total Bayar</span>
-                <span className="tabular-nums">{formatRupiah(receiptTx.total_amount)}</span>
-              </div>
-              <div className="flex justify-between text-[11px] text-[#22C55E]">
-                <span>Laba Kotor</span>
-                <span className="tabular-nums">+{formatRupiah(receiptTx.profit)}</span>
-              </div>
-            </div>
-
-            {/* Footer note */}
-            <div className="text-center pt-2 text-[10px] text-[#8A8A91]">
-              <p>{profile.receipt_footer || 'Terima kasih atas kunjungan Anda!'}</p>
-            </div>
-
-            {/* Actions */}
-            <div className="pt-3 border-t border-[#242428] grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="py-2 px-3 rounded-lg bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] text-[#F5F5F5] flex items-center justify-center gap-1.5 font-medium transition-colors"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Cetak Nota</span>
-              </button>
-
-              <a
-                href={`https://wa.me/?text=${generateWaShareText(receiptTx)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-2 px-3 rounded-lg bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] font-semibold flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Kirim WhatsApp</span>
-              </a>
-            </div>
-          </div>
-        </Modal>
-      )}
+      {/* Authentic Thermal Receipt Modal */}
+      <ReceiptModal
+        isOpen={!!receiptTx}
+        onClose={() => setReceiptTx(null)}
+        transaction={receiptTx}
+        profile={profile}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal
