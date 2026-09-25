@@ -546,7 +546,7 @@ export function BusinessProvider({
               } = await supabase
                 .from('businesses')
                 .select(
-                  'id, owner_id, name, owner_name, phone, email, business_type, address, instagram, receipt_footer, logo_url, created_at'
+                  'id, owner_id, name, owner_name, phone, business_type, address, instagram, receipt_footer, logo_url, created_at'
                 )
                 .eq(
                   'owner_id',
@@ -598,7 +598,7 @@ export function BusinessProvider({
                       rawOwner,
                     phone: b.phone || '',
                     email:
-                      b.email || sbUser.email ||
+                      sbUser.email ||
                       '',
                     business_type:
                       b.business_type ||
@@ -622,7 +622,7 @@ export function BusinessProvider({
                     business_name: b.name || prev.business_name || 'Kedai Saya',
                     owner_name: rawOwner || prev.owner_name || 'Pemilik Usaha',
                     phone: b.phone !== undefined && b.phone !== null ? b.phone : (prev.phone || ''),
-                    email: b.email || sbUser.email || prev.email || '',
+                    email: sbUser.email || prev.email || '',
                     business_type: b.business_type || prev.business_type || 'F&B / Kuliner',
                     address: b.address !== undefined && b.address !== null ? b.address : (prev.address || ''),
                     instagram: b.instagram !== undefined && b.instagram !== null ? b.instagram : (prev.instagram || ''),
@@ -696,7 +696,7 @@ export function BusinessProvider({
                   insertPayload
                 )
                 .select(
-                  'id, owner_id, name, owner_name, phone, email, business_type, address, instagram, receipt_footer, logo_url, created_at'
+                  'id, owner_id, name, owner_name, phone, business_type, address, instagram, receipt_footer, logo_url, created_at'
                 )
                 .single();
 
@@ -711,7 +711,7 @@ export function BusinessProvider({
                 } = await supabase
                   .from('businesses')
                   .select(
-                    'id, owner_id, name, owner_name, phone, email, business_type, address, instagram, receipt_footer, logo_url, created_at'
+                    'id, owner_id, name, owner_name, phone, business_type, address, instagram, receipt_footer, logo_url, created_at'
                   )
                   .eq(
                     'owner_id',
@@ -747,7 +747,7 @@ export function BusinessProvider({
                         fallbackOwner,
                       phone: b.phone || '',
                       email:
-                        b.email || sbUser.email ||
+                        sbUser.email ||
                         '',
                       business_type:
                         b.business_type ||
@@ -771,7 +771,7 @@ export function BusinessProvider({
                       business_name: loaded.name || prev.business_name || 'Kedai Saya',
                       owner_name: loaded.owner_name || fallbackOwner || prev.owner_name || 'Pemilik Usaha',
                       phone: b.phone !== undefined && b.phone !== null ? b.phone : (prev.phone || ''),
-                      email: b.email || sbUser.email || prev.email || '',
+                      email: sbUser.email || prev.email || '',
                       business_type: loaded.business_type || prev.business_type || 'F&B / Kuliner',
                       address: b.address !== undefined && b.address !== null ? b.address : (prev.address || ''),
                       instagram: b.instagram !== undefined && b.instagram !== null ? b.instagram : (prev.instagram || ''),
@@ -1317,10 +1317,110 @@ export function BusinessProvider({
   const updateProfile = async (
     partial: Partial<BusinessProfile>
   ) => {
+    if (!business?.id) {
+      throw new Error('Profil bisnis tidak ditemukan. Silakan masuk kembali.');
+    }
+
+    const updateData: Record<string, any> = {};
+
+    if (partial.business_name !== undefined) {
+      updateData.name = partial.business_name;
+    }
+    if (partial.owner_name !== undefined) {
+      updateData.owner_name = partial.owner_name;
+    }
+    if (partial.phone !== undefined) {
+      updateData.phone = partial.phone;
+    }
+    if (partial.business_type !== undefined) {
+      updateData.business_type = partial.business_type;
+    }
+    if (partial.address !== undefined) {
+      updateData.address = partial.address;
+    }
+    if (partial.instagram !== undefined) {
+      updateData.instagram = partial.instagram;
+    }
+    if (partial.receipt_footer !== undefined) {
+      updateData.receipt_footer = partial.receipt_footer;
+    }
+    if (partial.logo_url !== undefined) {
+      updateData.logo_url = partial.logo_url;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new Error('Tidak ada data profil yang diubah.');
+    }
+
+    const { error } = await supabase
+      .from('businesses')
+      .update(updateData)
+      .eq('id', business.id);
+
+    if (error) {
+      console.error('Supabase update businesses error:', error);
+      throw new Error(error.message || 'Gagal memperbarui profil bisnis di database.');
+    }
+
+    const { data: updatedBiz, error: fetchError } = await supabase
+      .from('businesses')
+      .select(
+        'id, owner_id, name, owner_name, phone, business_type, address, instagram, receipt_footer, logo_url, created_at'
+      )
+      .eq('id', business.id)
+      .single();
+
+    if (fetchError || !updatedBiz) {
+      throw new Error(
+        fetchError?.message || 'Gagal memuat ulang data profil terbaru dari database.'
+      );
+    }
+
+    setBusiness({
+      id: updatedBiz.id,
+      owner_id: updatedBiz.owner_id,
+      user_id: updatedBiz.owner_id,
+      name: updatedBiz.name,
+      owner_name: updatedBiz.owner_name || '',
+      phone: updatedBiz.phone || '',
+      email: business.email || '',
+      business_type: updatedBiz.business_type || 'F&B / Kuliner',
+      address: updatedBiz.address || '',
+      instagram: updatedBiz.instagram || '',
+      logo_url: updatedBiz.logo_url || '',
+      receipt_footer:
+        updatedBiz.receipt_footer || 'Terima kasih atas kunjungan Anda!',
+      created_at: updatedBiz.created_at,
+    });
+
     setProfile(prev => {
-      const updated = {
+      const updated: BusinessProfile = {
         ...prev,
-        ...partial,
+        business_name: updatedBiz.name || prev.business_name || 'Kedai Saya',
+        owner_name: updatedBiz.owner_name || prev.owner_name || 'Pemilik Usaha',
+        phone:
+          updatedBiz.phone !== undefined && updatedBiz.phone !== null
+            ? updatedBiz.phone
+            : prev.phone || '',
+        email: prev.email || '',
+        business_type:
+          updatedBiz.business_type || prev.business_type || 'F&B / Kuliner',
+        address:
+          updatedBiz.address !== undefined && updatedBiz.address !== null
+            ? updatedBiz.address
+            : prev.address || '',
+        instagram:
+          updatedBiz.instagram !== undefined && updatedBiz.instagram !== null
+            ? updatedBiz.instagram
+            : prev.instagram || '',
+        logo_url:
+          updatedBiz.logo_url !== undefined && updatedBiz.logo_url !== null
+            ? updatedBiz.logo_url
+            : prev.logo_url || '',
+        receipt_footer:
+          updatedBiz.receipt_footer ||
+          prev.receipt_footer ||
+          'Terima kasih atas kunjungan Anda!',
       };
       try {
         localStorage.setItem('bisnisku_profile', JSON.stringify(updated));
@@ -1329,103 +1429,6 @@ export function BusinessProvider({
       }
       return updated;
     });
-
-    if (business?.id) {
-      try {
-        const updateData: any = {};
-
-        if (
-          partial.business_name !==
-          undefined
-        ) {
-          updateData.name =
-            partial.business_name;
-        }
-
-        if (
-          partial.owner_name !==
-          undefined
-        ) {
-          updateData.owner_name =
-            partial.owner_name;
-        }
-
-        if (
-          partial.phone !==
-          undefined
-        ) {
-          updateData.phone =
-            partial.phone;
-        }
-
-        if (
-          partial.business_type !==
-          undefined
-        ) {
-          updateData.business_type =
-            partial.business_type;
-        }
-
-        if (
-          partial.address !==
-          undefined
-        ) {
-          updateData.address =
-            partial.address;
-        }
-
-        if (
-          partial.instagram !==
-          undefined
-        ) {
-          updateData.instagram =
-            partial.instagram;
-        }
-
-        if (
-          partial.receipt_footer !==
-          undefined
-        ) {
-          updateData.receipt_footer =
-            partial.receipt_footer;
-        }
-
-        if (
-          partial.logo_url !==
-          undefined
-        ) {
-          updateData.logo_url =
-            partial.logo_url;
-        }
-
-        if (
-          Object.keys(
-            updateData
-          ).length > 0
-        ) {
-          const { error } =
-            await supabase
-              .from('businesses')
-              .update(updateData)
-              .eq(
-                'id',
-                business.id
-              );
-
-          if (error) {
-            console.error(
-              'Supabase update businesses error:',
-              error
-            );
-          }
-        }
-      } catch (err) {
-        console.error(
-          'Error updating business profile:',
-          err
-        );
-      }
-    }
   };
 
   /*
