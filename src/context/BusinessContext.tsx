@@ -546,7 +546,7 @@ export function BusinessProvider({
               } = await supabase
                 .from('businesses')
                 .select(
-                  'id, owner_id, name, owner_name, business_type, created_at'
+                  'id, owner_id, name, owner_name, phone, email, business_type, address, instagram, receipt_footer, logo_url, created_at'
                 )
                 .eq(
                   'owner_id',
@@ -596,16 +596,18 @@ export function BusinessProvider({
                     name: b.name,
                     owner_name:
                       rawOwner,
-                    phone: '',
+                    phone: b.phone || '',
                     email:
-                      sbUser.email ||
+                      b.email || sbUser.email ||
                       '',
                     business_type:
                       b.business_type ||
                       'F&B / Kuliner',
-                    address: '',
+                    address: b.address || '',
+                    instagram: b.instagram || '',
+                    logo_url: b.logo_url || '',
                     receipt_footer:
-                      'Terima kasih atas kunjungan Anda!',
+                      b.receipt_footer || 'Terima kasih atas kunjungan Anda!',
                     created_at:
                       b.created_at,
                   };
@@ -614,21 +616,25 @@ export function BusinessProvider({
                   loaded
                 );
 
-                setProfile({
-                  business_name:
-                    loaded.name,
-                  owner_name:
-                    rawOwner,
-                  phone: '',
-                  email:
-                    sbUser.email ||
-                    '',
-                  business_type:
-                    loaded.business_type ||
-                    'F&B / Kuliner',
-                  address: '',
-                  receipt_footer:
-                    'Terima kasih atas kunjungan Anda!',
+                setProfile(prev => {
+                  const updated: BusinessProfile = {
+                    ...prev,
+                    business_name: b.name || prev.business_name || 'Kedai Saya',
+                    owner_name: rawOwner || prev.owner_name || 'Pemilik Usaha',
+                    phone: b.phone !== undefined && b.phone !== null ? b.phone : (prev.phone || ''),
+                    email: b.email || sbUser.email || prev.email || '',
+                    business_type: b.business_type || prev.business_type || 'F&B / Kuliner',
+                    address: b.address !== undefined && b.address !== null ? b.address : (prev.address || ''),
+                    instagram: b.instagram !== undefined && b.instagram !== null ? b.instagram : (prev.instagram || ''),
+                    logo_url: b.logo_url !== undefined && b.logo_url !== null ? b.logo_url : (prev.logo_url || ''),
+                    receipt_footer: b.receipt_footer || prev.receipt_footer || 'Terima kasih atas kunjungan Anda!',
+                  };
+                  try {
+                    localStorage.setItem('bisnisku_profile', JSON.stringify(updated));
+                  } catch (e) {
+                    // localStorage ignore
+                  }
+                  return updated;
                 });
 
                 await fetchData(
@@ -690,7 +696,7 @@ export function BusinessProvider({
                   insertPayload
                 )
                 .select(
-                  'id, owner_id, name, owner_name, business_type, created_at'
+                  'id, owner_id, name, owner_name, phone, email, business_type, address, instagram, receipt_footer, logo_url, created_at'
                 )
                 .single();
 
@@ -705,7 +711,7 @@ export function BusinessProvider({
                 } = await supabase
                   .from('businesses')
                   .select(
-                    'id, owner_id, name, owner_name, business_type, created_at'
+                    'id, owner_id, name, owner_name, phone, email, business_type, address, instagram, receipt_footer, logo_url, created_at'
                   )
                   .eq(
                     'owner_id',
@@ -739,16 +745,18 @@ export function BusinessProvider({
                       owner_name:
                         b.owner_name ||
                         fallbackOwner,
-                      phone: '',
+                      phone: b.phone || '',
                       email:
-                        sbUser.email ||
+                        b.email || sbUser.email ||
                         '',
                       business_type:
                         b.business_type ||
                         'F&B / Kuliner',
-                      address: '',
+                      address: b.address || '',
+                      instagram: b.instagram || '',
+                      logo_url: b.logo_url || '',
                       receipt_footer:
-                        'Terima kasih atas kunjungan Anda!',
+                        b.receipt_footer || 'Terima kasih atas kunjungan Anda!',
                       created_at:
                         b.created_at,
                     };
@@ -757,22 +765,25 @@ export function BusinessProvider({
                     loaded
                   );
 
-                  setProfile({
-                    business_name:
-                      loaded.name,
-                    owner_name:
-                      loaded.owner_name ||
-                      fallbackOwner,
-                    phone: '',
-                    email:
-                      sbUser.email ||
-                      '',
-                    business_type:
-                      loaded.business_type ||
-                      'F&B / Kuliner',
-                    address: '',
-                    receipt_footer:
-                      'Terima kasih atas kunjungan Anda!',
+                  setProfile(prev => {
+                    const updated: BusinessProfile = {
+                      ...prev,
+                      business_name: loaded.name || prev.business_name || 'Kedai Saya',
+                      owner_name: loaded.owner_name || fallbackOwner || prev.owner_name || 'Pemilik Usaha',
+                      phone: b.phone !== undefined && b.phone !== null ? b.phone : (prev.phone || ''),
+                      email: b.email || sbUser.email || prev.email || '',
+                      business_type: loaded.business_type || prev.business_type || 'F&B / Kuliner',
+                      address: b.address !== undefined && b.address !== null ? b.address : (prev.address || ''),
+                      instagram: b.instagram !== undefined && b.instagram !== null ? b.instagram : (prev.instagram || ''),
+                      logo_url: b.logo_url !== undefined && b.logo_url !== null ? b.logo_url : (prev.logo_url || ''),
+                      receipt_footer: b.receipt_footer || prev.receipt_footer || 'Terima kasih atas kunjungan Anda!',
+                    };
+                    try {
+                      localStorage.setItem('bisnisku_profile', JSON.stringify(updated));
+                    } catch (e) {
+                      // localStorage ignore
+                    }
+                    return updated;
                   });
 
                   await fetchData(
@@ -1377,6 +1388,14 @@ export function BusinessProvider({
         ) {
           updateData.receipt_footer =
             partial.receipt_footer;
+        }
+
+        if (
+          partial.logo_url !==
+          undefined
+        ) {
+          updateData.logo_url =
+            partial.logo_url;
         }
 
         if (

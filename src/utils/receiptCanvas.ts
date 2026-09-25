@@ -346,3 +346,5 @@ export function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
     }, 'image/png', 0.95);
   });
 }
+
+
