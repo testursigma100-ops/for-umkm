@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { BusinessProvider } from './context/BusinessContext';
+import React, { useState } from 'react';
+import { BusinessProvider, useBusiness } from './context/BusinessContext';
 import { Navbar } from './components/layout/Navbar';
 import { BottomNav, NavTab } from './components/layout/BottomNav';
 import { Sidebar } from './components/layout/Sidebar';
@@ -17,25 +17,16 @@ import { ChatPage } from './pages/ChatPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AuthPages } from './pages/AuthPages';
 import { Modal } from './components/common/Modal';
-import { useBusiness } from './context/BusinessContext';
-import { formatRupiah, getTodayDateString } from './utils/formatters';
+import { getTodayDateString } from './utils/formatters';
 import { ExpenseCategory } from './types';
-import { Database, LogIn, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 function MainApp() {
-  const [activeTab, setActiveTab] = useState<NavTab | 'auth'>('dashboard');
+  const { user, addExpense } = useBusiness();
+  const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isQuickExpenseOpen, setIsQuickExpenseOpen] = useState(false);
 
   // Quick expense form states
-  const { user, isSupabaseConfigured, addExpense } = useBusiness();
-
-  // If user is already authenticated, skip auth screen and navigate to dashboard
-  useEffect(() => {
-    if (user.isAuthenticated && activeTab === 'auth') {
-      setActiveTab('dashboard');
-    }
-  }, [user.isAuthenticated, activeTab]);
-
   const [expName, setExpName] = useState('');
   const [expAmount, setExpAmount] = useState<number | ''>('');
   const [expCategory, setExpCategory] = useState<ExpenseCategory>('Bahan');
@@ -66,183 +57,167 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#08080A] text-[#F0F0F2] flex flex-col">
+    <div className="min-h-screen bg-[#0B0B0C] text-[#F5F5F5] flex flex-col selection:bg-[#22C55E] selection:text-black">
       {/* Top Navbar */}
       <Navbar
-        activeTab={activeTab === 'auth' ? 'dashboard' : activeTab}
-        onTabChange={(tab: NavTab) => setActiveTab(tab)}
-        onOpenQuickTxModal={() => setActiveTab('transactions')}
-        onOpenQuickExpenseModal={() => setIsQuickExpenseOpen(true)}
-        onOpenAuthModal={() => setActiveTab('auth')}
+        activeTab={activeTab}
+        onTabChange={(tab: NavTab) => {
+          if (user.isAuthenticated) {
+            setActiveTab(tab);
+          }
+        }}
+        onOpenQuickTxModal={user.isAuthenticated ? () => setActiveTab('transactions') : undefined}
+        onOpenQuickExpenseModal={user.isAuthenticated ? () => setIsQuickExpenseOpen(true) : undefined}
+        onOpenAuthModal={() => {}}
       />
-
-      {/* Supabase Status Notification Banners */}
-      {!isSupabaseConfigured ? (
-        <div className="bg-[#16161B] border-b border-[#22222A] px-4 py-2 text-xs text-[#7A7A84] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Database className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>
-              Database Supabase belum terhubung. Seluruh data produk, penjualan, dan laporan membutuhkan koneksi Supabase PostgreSQL.
-            </span>
-          </div>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className="text-[#10B981] font-semibold hover:underline shrink-0"
-          >
-            Hubungkan Sekarang &rarr;
-          </button>
-        </div>
-      ) : !user.isAuthenticated && activeTab !== 'auth' && activeTab !== 'settings' ? (
-        <div className="bg-[#101013] border-b border-[#22222A] px-4 py-2 text-xs text-[#7A7A84] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <LogIn className="w-4 h-4 text-[#10B981] shrink-0" />
-            <span>
-              Silakan masuk atau daftarkan akun usaha Anda untuk mengakses data bisnis tersimpan di Supabase.
-            </span>
-          </div>
-          <button
-            onClick={() => setActiveTab('auth')}
-            className="text-[#10B981] font-semibold hover:underline shrink-0"
-          >
-            Masuk / Daftar &rarr;
-          </button>
-        </div>
-      ) : null}
 
       {/* Main Body */}
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        {/* Desktop Sidebar (hidden when in auth screen) */}
-        {activeTab !== 'auth' && (
-          <Sidebar
-            activeTab={activeTab}
-            onTabChange={(tab: NavTab) => setActiveTab(tab)}
-          />
-        )}
-
-        {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-full overflow-x-hidden">
-          {activeTab === 'dashboard' && (
-            <DashboardPage
-              onNavigate={(tab: NavTab) => setActiveTab(tab)}
-              onOpenQuickTx={() => setActiveTab('transactions')}
-              onOpenQuickExpense={() => setIsQuickExpenseOpen(true)}
-            />
-          )}
-
-          {activeTab === 'products' && <ProductsPage />}
-
-          {activeTab === 'transactions' && <TransactionsPage />}
-
-          {activeTab === 'expenses' && <ExpensesPage />}
-
-          {activeTab === 'reports' && <ReportsPage />}
-
-          {activeTab === 'chat' && <ChatPage />}
-
-          {activeTab === 'settings' && <SettingsPage />}
-
-          {activeTab === 'auth' && (
+        {/* Strict Auth Guard: If not authenticated, render AuthPages only */}
+        {!user.isAuthenticated ? (
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 flex items-center justify-center min-h-[calc(100vh-60px)]">
             <AuthPages onSuccess={() => setActiveTab('dashboard')} />
-          )}
-        </main>
+          </main>
+        ) : (
+          <>
+            {/* Desktop Sidebar */}
+            <Sidebar
+              activeTab={activeTab}
+              onTabChange={(tab: NavTab) => setActiveTab(tab)}
+            />
+
+            {/* Content Area */}
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-full overflow-x-hidden min-w-0">
+              {activeTab === 'dashboard' && (
+                <DashboardPage
+                  onNavigate={(tab: NavTab) => setActiveTab(tab)}
+                  onOpenQuickTx={() => setActiveTab('transactions')}
+                  onOpenQuickExpense={() => setIsQuickExpenseOpen(true)}
+                />
+              )}
+
+              {activeTab === 'products' && <ProductsPage />}
+
+              {activeTab === 'transactions' && <TransactionsPage />}
+
+              {activeTab === 'expenses' && <ExpensesPage />}
+
+              {activeTab === 'reports' && <ReportsPage />}
+
+              {activeTab === 'chat' && <ChatPage />}
+
+              {activeTab === 'settings' && <SettingsPage />}
+            </main>
+          </>
+        )}
       </div>
 
-      {/* Mobile Bottom Navigation (hidden in auth screen) */}
-      {activeTab !== 'auth' && (
+      {/* Mobile Bottom Navigation (Only visible for authenticated users) */}
+      {user.isAuthenticated && (
         <BottomNav
           activeTab={activeTab}
           onTabChange={(tab: NavTab) => setActiveTab(tab)}
         />
       )}
 
-      {/* Quick Add Expense Modal accessible from navbar */}
-      <Modal
-        isOpen={isQuickExpenseOpen}
-        onClose={() => setIsQuickExpenseOpen(false)}
-        title="Catat Pengeluaran Cepat"
-        subtitle="Biaya operasional atau pembelian bahan hari ini"
-        maxWidth="md"
-      >
-        <form onSubmit={handleQuickExpenseSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-              Nama Pengeluaran *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Contoh: Beli Es Kristal, Bensin, Galon Air"
-              value={expName}
-              onChange={e => setExpName(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
+      {/* Quick Add Expense Modal for Authenticated User */}
+      {user.isAuthenticated && (
+        <Modal
+          isOpen={isQuickExpenseOpen}
+          onClose={() => !isSavingExp && setIsQuickExpenseOpen(false)}
+          title="Catat Pengeluaran Cepat"
+          subtitle="Biaya operasional atau pembelian bahan hari ini"
+          maxWidth="md"
+        >
+          <form onSubmit={handleQuickExpenseSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Jumlah Biaya (Rp) *
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Nama Pengeluaran *
               </label>
               <input
-                type="number"
+                type="text"
                 required
-                min="0"
-                placeholder="0"
-                value={expAmount}
-                onChange={e => setExpAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                placeholder="Contoh: Beli Es Kristal, Bensin, Plastik Cup"
+                value={expName}
+                onChange={e => setExpName(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Kategori Biaya
-              </label>
-              <select
-                value={expCategory}
-                onChange={e => setExpCategory(e.target.value as ExpenseCategory)}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] focus:outline-hidden focus:border-[#10B981]"
-              >
-                <option value="Bahan">Bahan</option>
-                <option value="Operasional">Operasional</option>
-                <option value="Transport">Transport</option>
-                <option value="Promosi">Promosi</option>
-                <option value="Lainnya">Lainnya</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                  Jumlah Biaya (Rp) *
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  placeholder="0"
+                  value={expAmount}
+                  onChange={e => setExpAmount(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                  Kategori Biaya
+                </label>
+                <select
+                  value={expCategory}
+                  onChange={e => setExpCategory(e.target.value as ExpenseCategory)}
+                  className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] focus:outline-hidden focus:border-[#22C55E]"
+                >
+                  <option value="Bahan">Bahan</option>
+                  <option value="Operasional">Operasional</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Promosi">Promosi</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-              Catatan (Opsional)
-            </label>
-            <input
-              type="text"
-              placeholder="Keterangan tambahan..."
-              value={expNotes}
-              onChange={e => setExpNotes(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
-            />
-          </div>
+            <div>
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Catatan (Opsional)
+              </label>
+              <input
+                type="text"
+                placeholder="Keterangan tambahan..."
+                value={expNotes}
+                onChange={e => setExpNotes(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
+              />
+            </div>
 
-          <div className="pt-3 border-t border-[#22222A] flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsQuickExpenseOpen(false)}
-              className="px-4 py-2 text-xs font-medium text-[#7A7A84] hover:text-[#F0F0F2] bg-[#16161B] rounded-lg transition-colors"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSavingExp}
-              className="px-4 py-2 text-xs font-semibold text-black bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 rounded-lg transition-colors"
-            >
-              {isSavingExp ? 'Menyimpan...' : 'Simpan Pengeluaran'}
-            </button>
-          </div>
-        </form>
-      </Modal>
+            <div className="pt-3 border-t border-[#242428] flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={isSavingExp}
+                onClick={() => setIsQuickExpenseOpen(false)}
+                className="px-4 py-2 text-xs font-medium text-[#8A8A91] hover:text-[#F5F5F5] bg-[#141416] border border-[#242428] rounded-lg transition-colors disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSavingExp}
+                className="px-4 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {isSavingExp ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  <span>Simpan Pengeluaran</span>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

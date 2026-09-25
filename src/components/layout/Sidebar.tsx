@@ -29,39 +29,42 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       icon: Package,
       badge: dashboardSummary.lowStockProducts.length > 0 ? dashboardSummary.lowStockProducts.length : undefined,
     },
-    { id: 'transactions' as NavTab, label: 'Transaksi / Kasir', icon: Receipt },
+    { id: 'transactions' as NavTab, label: 'Kasir & Transaksi', icon: Receipt },
     { id: 'expenses' as NavTab, label: 'Pengeluaran', icon: ArrowDownCircle },
     { id: 'reports' as NavTab, label: 'Laporan Keuangan', icon: BarChart3 },
     { id: 'chat' as NavTab, label: 'Tanya Bisnis AI', icon: BotMessageSquare, isAi: true },
-    { id: 'settings' as NavTab, label: 'Pengaturan & Supabase', icon: SettingsIcon },
+    { id: 'settings' as NavTab, label: 'Pengaturan Usaha', icon: SettingsIcon },
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-57px)] bg-[#08080A] border-r border-[#22222A] p-4">
-      {/* Business Info snippet */}
-      <div className="p-3.5 mb-4 rounded-xl bg-[#101013] border border-[#22222A]">
+    <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-53px)] bg-[#0B0B0C] border-r border-[#242428] p-4 shrink-0">
+      {/* Business Info Header */}
+      <div className="p-3 mb-4 rounded-xl bg-[#141416] border border-[#242428]">
         <div className="flex items-center gap-2.5 mb-1.5">
-          <div className="p-1.5 rounded-lg bg-[#16161B] text-[#10B981]">
+          <div className="p-1.5 rounded-lg bg-[#1C1C20] text-[#8A8A91] shrink-0">
             <Store className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <h4 className="text-xs font-semibold text-[#F0F0F2] truncate">
-              {profile.business_name}
+            <h4 className="text-xs font-semibold text-[#F5F5F5] truncate">
+              {profile.business_name || 'Kedai UMKM'}
             </h4>
-            <p className="text-[11px] text-[#7A7A84] truncate">
-              {profile.business_type}
+            <p className="text-[11px] text-[#8A8A91] truncate">
+              {profile.business_type || 'F&B / Kuliner'}
             </p>
           </div>
         </div>
-        <div className="text-[10px] text-[#7A7A84] flex items-center justify-between pt-2 border-t border-[#22222A]/60">
-          <span>Target: F&B / Kuliner</span>
-          <span className="text-[#10B981] font-medium">Aktif</span>
+        <div className="text-[10px] text-[#8A8A91] flex items-center justify-between pt-2 border-t border-[#242428]">
+          <span>Status Usaha</span>
+          <span className="text-[#22C55E] font-medium flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
+            Aktif
+          </span>
         </div>
       </div>
 
-      {/* Navigation List */}
+      {/* Navigation Links */}
       <div className="space-y-1 flex-1">
-        <p className="text-[10px] font-semibold text-[#7A7A84] uppercase tracking-wider px-3 py-1 mb-1">
+        <p className="text-[10px] font-semibold text-[#8A8A91] uppercase tracking-wider px-3 py-1 mb-1">
           Menu Utama
         </p>
         {navItems.map(item => {
@@ -71,36 +74,29 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => onTabChange(item.id)}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
                 isActive
-                  ? 'bg-[#101013] text-[#10B981] border border-[#22222A]'
-                  : 'text-[#7A7A84] hover:text-[#F0F0F2] hover:bg-[#101013]/60'
+                  ? 'bg-[#141416] text-[#F5F5F5] border border-[#242428]'
+                  : 'text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#141416]/60'
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <Icon
-                  className={`w-4 h-4 ${
+                  className={`w-4 h-4 shrink-0 ${
                     isActive
-                      ? 'text-[#10B981]'
-                      : item.isAi
-                      ? 'text-[#10B981]'
-                      : 'text-[#7A7A84]'
+                      ? 'text-[#22C55E]'
+                      : 'text-[#8A8A91]'
                   }`}
                 />
-                <span>{item.label}</span>
+                <span className="truncate">{item.label}</span>
               </div>
 
               {item.badge !== undefined && (
-                <span className="flex items-center gap-1 text-[10px] text-amber-400 font-medium">
+                <span className="flex items-center gap-1 text-[10px] text-amber-400 font-medium tabular-nums">
                   <AlertTriangle className="w-3 h-3" />
                   {item.badge}
-                </span>
-              )}
-
-              {item.isAi && !isActive && (
-                <span className="text-[9px] font-semibold text-[#10B981] bg-[#10B981]/10 px-1.5 py-0.5 rounded">
-                  Copilot
                 </span>
               )}
             </button>
@@ -108,10 +104,10 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         })}
       </div>
 
-      {/* Tagline footer */}
-      <div className="pt-4 border-t border-[#22222A] px-2 text-center">
-        <p className="text-[11px] font-medium text-[#F0F0F2]">BisnisKu AI</p>
-        <p className="text-[10px] text-[#7A7A84]">"Jualan jalan, bisnis makin jelas."</p>
+      {/* Subtle Footer Tagline */}
+      <div className="pt-3 border-t border-[#242428] px-2 text-center">
+        <p className="text-[11px] font-medium text-[#F5F5F5]">BisnisKu AI</p>
+        <p className="text-[10px] text-[#8A8A91]">Jualan jalan, bisnis makin jelas.</p>
       </div>
     </aside>
   );

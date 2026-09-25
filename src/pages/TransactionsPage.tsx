@@ -64,14 +64,14 @@ export function TransactionsPage() {
     if (!toast) return;
     const timer = setTimeout(() => {
       setToast(null);
-    }, 3800);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [toast]);
 
   // History filtering
   const [historySearch, setHistorySearch] = useState('');
   const [historyMethodFilter, setHistoryMethodFilter] = useState('all');
-  const [historyDateFilter, setHistoryDateFilter] = useState('all'); // all, today, 7days, month
+  const [historyDateFilter, setHistoryDateFilter] = useState('all');
 
   // Categories for POS product selector derived dynamically from products
   const productCategories = useMemo(() => {
@@ -116,7 +116,7 @@ export function TransactionsPage() {
     const currentProd = products.find(p => p.id === product.id) || product;
     if (currentProd.stock <= 0) {
       setToast({
-        message: `Stok produk "${product.name}" habis. Tambahkan stok terlebih dahulu.`,
+        message: `Stok produk "${product.name}" habis.`,
         type: 'error',
       });
       return;
@@ -180,12 +180,11 @@ export function TransactionsPage() {
     setTransactionNotes('');
   };
 
-  // Submit Transaction to Supabase safely
+  // Submit Transaction safely
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0 || isCheckingOut) return;
 
-    // Validate available stock before checkout
     for (const item of cart) {
       const liveProd = products.find(p => p.id === item.product.id);
       const available = liveProd ? liveProd.stock : item.product.stock;
@@ -224,15 +223,14 @@ export function TransactionsPage() {
         clearCart();
         setReceiptTx(newTx);
         setToast({
-          message: `Transaksi ${newTx.invoice_number} berhasil dicatat ke Supabase!`,
+          message: `Transaksi ${newTx.invoice_number} berhasil dicatat!`,
           type: 'success',
         });
-        refreshData().catch(err => console.error('Error refreshing data after sale:', err));
+        await refreshData();
       }
     } catch (err: any) {
-      console.error('Checkout error:', err);
       setToast({
-        message: err?.message || 'Gagal menyimpan transaksi ke Supabase',
+        message: err?.message || 'Gagal menyimpan transaksi',
         type: 'error',
       });
     } finally {
@@ -240,21 +238,20 @@ export function TransactionsPage() {
     }
   };
 
-  // Delete transaction confirm handler
   const handleDeleteTransactionConfirm = async () => {
-    if (!deletingTx) return;
+    if (!deletingTx || isDeleting) return;
     setIsDeleting(true);
     try {
       await deleteTransaction(deletingTx.id);
       setToast({
-        message: `Nota transaksi ${deletingTx.invoice_number} berhasil dihapus dari Supabase`,
+        message: `Nota transaksi ${deletingTx.invoice_number} berhasil dihapus.`,
         type: 'success',
       });
       setDeletingTx(null);
-      refreshData().catch(err => console.error('Error refreshing after delete:', err));
+      await refreshData();
     } catch (err: any) {
       setToast({
-        message: err?.message || 'Gagal menghapus transaksi dari Supabase',
+        message: err?.message || 'Gagal menghapus transaksi',
         type: 'error',
       });
     } finally {
@@ -267,16 +264,13 @@ export function TransactionsPage() {
     const todayStr = getTodayDateString();
 
     return transactions.filter(t => {
-      // Search
       const matchSearch =
         (t.invoice_number || '').toLowerCase().includes(historySearch.toLowerCase()) ||
         (t.customer_name && t.customer_name.toLowerCase().includes(historySearch.toLowerCase())) ||
         (Array.isArray(t.items) && t.items.some(i => i.product_name.toLowerCase().includes(historySearch.toLowerCase())));
 
-      // Method
       const matchMethod = historyMethodFilter === 'all' || t.payment_method === historyMethodFilter;
 
-      // Date
       let matchDate = true;
       const txDateStr = t.date ? t.date.split('T')[0] : '';
       if (historyDateFilter === 'today') {
@@ -293,7 +287,6 @@ export function TransactionsPage() {
     });
   }, [transactions, historySearch, historyMethodFilter, historyDateFilter]);
 
-  // Generate WhatsApp Share text for receipt
   const generateWaShareText = (tx: Transaction) => {
     const itemsList = tx.items
       .map(i => `• ${i.product_name} (${i.quantity}x) = ${formatRupiah(i.subtotal)}`)
@@ -314,36 +307,38 @@ export function TransactionsPage() {
   };
 
   return (
-    <div className="space-y-6 pb-20 md:pb-8">
+    <div className="space-y-5 pb-24 md:pb-8">
       {/* Page Title & View Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F0F0F2]">
-            Transaksi Penjualan
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
+            Kasir & Transaksi
           </h1>
-          <p className="text-xs text-[#7A7A84] mt-0.5">
-            Pencatatan kasir instan, subtotal otomatis, dan sinkronisasi stok Supabase.
+          <p className="text-xs text-[#8A8A91] mt-0.5">
+            Pencatatan kasir instan, kalkulasi laba kotor, dan riwayat penjualan.
           </p>
         </div>
 
         {/* View Switcher Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-[#101013] border border-[#22222A] rounded-lg">
+        <div className="flex items-center gap-1 p-1 bg-[#141416] border border-[#242428] rounded-lg">
           <button
+            type="button"
             onClick={() => setActiveView('pos')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
               activeView === 'pos'
-                ? 'bg-[#16161B] text-[#10B981] shadow-xs'
-                : 'text-[#7A7A84] hover:text-[#F0F0F2]'
+                ? 'bg-[#1C1C20] text-[#F5F5F5]'
+                : 'text-[#8A8A91] hover:text-[#F5F5F5]'
             }`}
           >
             Kasir / Catat Baru
           </button>
           <button
+            type="button"
             onClick={() => setActiveView('history')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
               activeView === 'history'
-                ? 'bg-[#16161B] text-[#10B981] shadow-xs'
-                : 'text-[#7A7A84] hover:text-[#F0F0F2]'
+                ? 'bg-[#1C1C20] text-[#F5F5F5]'
+                : 'text-[#8A8A91] hover:text-[#F5F5F5]'
             }`}
           >
             Riwayat Penjualan ({transactions.length})
@@ -356,8 +351,8 @@ export function TransactionsPage() {
         <div
           className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
             toast.type === 'success'
-              ? 'bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981]'
-              : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+              ? 'bg-[#22C55E]/10 border-[#22C55E]/20 text-[#22C55E]'
+              : 'bg-red-500/10 border-red-500/20 text-red-400'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -369,8 +364,9 @@ export function TransactionsPage() {
             <span>{toast.message}</span>
           </div>
           <button
+            type="button"
             onClick={() => setToast(null)}
-            className="text-[#7A7A84] hover:text-[#F0F0F2] text-sm leading-none px-1"
+            className="text-[#8A8A91] hover:text-[#F5F5F5] text-sm leading-none px-1"
             aria-label="Tutup notifikasi"
           >
             &times;
@@ -380,19 +376,19 @@ export function TransactionsPage() {
 
       {activeView === 'pos' ? (
         /* KASIR / POS MODE */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
           {/* Left Column: Product Selector (Col 7) */}
-          <div className="lg:col-span-7 space-y-4">
+          <div className="lg:col-span-7 space-y-3">
             {/* Search and Category Filters */}
             <div className="flex flex-col sm:flex-row gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Ketik nama menu..."
+                  placeholder="Cari menu pesanan..."
                   value={searchProductQuery}
                   onChange={e => setSearchProductQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#101013] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#141416] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
 
@@ -400,11 +396,12 @@ export function TransactionsPage() {
                 {productCategories.map(cat => (
                   <button
                     key={cat}
+                    type="button"
                     onClick={() => setSelectedProductCategory(cat)}
                     className={`px-2.5 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
                       selectedProductCategory === cat
-                        ? 'bg-[#16161B] text-[#10B981] border border-[#22222A]'
-                        : 'text-[#7A7A84] hover:text-[#F0F0F2] hover:bg-[#101013]'
+                        ? 'bg-[#141416] text-[#F5F5F5] border border-[#242428]'
+                        : 'text-[#8A8A91] hover:text-[#F5F5F5]'
                     }`}
                   >
                     {cat === 'all' ? 'Semua' : cat}
@@ -413,28 +410,28 @@ export function TransactionsPage() {
               </div>
             </div>
 
-            {/* Products Selector Grid with Loading & Empty State */}
+            {/* Products Selector Grid */}
             {isLoadingData && products.length === 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="p-3 rounded-xl bg-[#101013] border border-[#22222A] animate-pulse h-28 space-y-2">
-                    <div className="h-3 w-16 bg-[#16161B] rounded" />
-                    <div className="h-4 w-24 bg-[#16161B] rounded" />
-                    <div className="h-3 w-20 bg-[#16161B] rounded mt-4" />
+                  <div key={i} className="p-3 rounded-xl bg-[#141416] border border-[#242428] animate-pulse h-28 space-y-2">
+                    <div className="h-3 w-16 bg-[#1C1C20] rounded" />
+                    <div className="h-4 w-24 bg-[#1C1C20] rounded" />
+                    <div className="h-3 w-20 bg-[#1C1C20] rounded mt-4" />
                   </div>
                 ))}
               </div>
             ) : filteredProducts.length === 0 ? (
-              <div className="p-8 text-center rounded-xl bg-[#101013] border border-[#22222A]">
-                <Package className="w-8 h-8 text-[#7A7A84] mx-auto mb-2 opacity-40" />
-                <p className="text-xs text-[#7A7A84]">
+              <div className="p-8 text-center rounded-xl bg-[#141416] border border-[#242428]">
+                <Package className="w-8 h-8 text-[#8A8A91] mx-auto mb-2 opacity-40" />
+                <p className="text-xs text-[#8A8A91]">
                   {searchProductQuery
                     ? `Tidak ada menu yang cocok dengan "${searchProductQuery}".`
                     : 'Belum ada produk di katalog usaha. Tambahkan produk di menu Produk.'}
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[600px] overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-[580px] overflow-y-auto pr-1">
                 {filteredProducts.map(product => {
                   const inCart = cart.find(c => c.product.id === product.id);
                   const isOutOfStock = product.stock <= 0;
@@ -443,43 +440,44 @@ export function TransactionsPage() {
                   return (
                     <button
                       key={product.id}
+                      type="button"
                       disabled={isOutOfStock || isMaxInCart}
                       onClick={() => addToCart(product)}
                       className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all relative ${
                         isOutOfStock
-                          ? 'opacity-40 bg-[#101013] border-[#22222A] cursor-not-allowed'
+                          ? 'opacity-40 bg-[#141416] border-[#242428] cursor-not-allowed'
                           : isMaxInCart
-                          ? 'bg-[#16161B] border-amber-500/40 shadow-xs'
+                          ? 'bg-[#1C1C20] border-amber-500/40'
                           : inCart
-                          ? 'bg-[#16161B] border-[#10B981]/50 shadow-xs'
-                          : 'bg-[#101013] border-[#22222A] hover:border-[#33333F]'
+                          ? 'bg-[#1C1C20] border-[#22C55E]/50'
+                          : 'bg-[#141416] border-[#242428] hover:border-[#323238]'
                       }`}
                     >
                       {inCart && (
-                        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#10B981] text-black font-bold text-[11px] flex items-center justify-center">
+                        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#22C55E] text-[#0B0B0C] font-bold text-[10px] flex items-center justify-center tabular-nums">
                           {inCart.quantity}
                         </span>
                       )}
 
                       <div>
                         <div className="flex items-center justify-between text-[10px] mb-1">
-                          <p className="text-[#7A7A84] font-medium">{product.category}</p>
+                          <p className="text-[#8A8A91] font-medium">{product.category}</p>
                           {isOutOfStock ? (
-                            <span className="text-rose-400 font-semibold text-[9px]">Habis</span>
+                            <span className="text-red-400 font-semibold text-[9px]">Habis</span>
                           ) : isMaxInCart ? (
                             <span className="text-amber-400 font-semibold text-[9px]">Max Stok</span>
                           ) : null}
                         </div>
-                        <h4 className="text-xs font-semibold text-[#F0F0F2] line-clamp-2">
+                        <h4 className="text-xs font-semibold text-[#F5F5F5] line-clamp-2">
                           {product.name}
                         </h4>
                       </div>
 
-                      <div className="mt-3 pt-2 border-t border-[#22222A]/60 flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#F0F0F2]">
+                      <div className="mt-3 pt-2 border-t border-[#242428]/60 flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#F5F5F5] tabular-nums">
                           {formatRupiah(product.selling_price)}
                         </span>
-                        <span className={`text-[10px] ${isOutOfStock ? 'text-rose-400' : 'text-[#7A7A84]'}`}>
+                        <span className={`text-[10px] tabular-nums ${isOutOfStock ? 'text-red-400' : 'text-[#8A8A91]'}`}>
                           {product.stock} {product.unit}
                         </span>
                       </div>
@@ -492,20 +490,21 @@ export function TransactionsPage() {
 
           {/* Right Column: Order Cart & Checkout (Col 5) */}
           <div className="lg:col-span-5">
-            <div className="p-4 sm:p-5 rounded-xl bg-[#101013] border border-[#22222A] sticky top-20 flex flex-col justify-between min-h-[520px]">
+            <div className="p-4 sm:p-5 rounded-xl bg-[#141416] border border-[#242428] sticky top-20 flex flex-col justify-between min-h-[500px]">
               <div>
                 {/* Cart Header */}
-                <div className="flex items-center justify-between pb-3 border-b border-[#22222A]">
+                <div className="flex items-center justify-between pb-3 border-b border-[#242428]">
                   <div className="flex items-center gap-2">
-                    <ShoppingCart className="w-4 h-4 text-[#10B981]" />
-                    <h3 className="text-sm font-semibold text-[#F0F0F2]">
+                    <ShoppingCart className="w-4 h-4 text-[#8A8A91]" />
+                    <h3 className="text-sm font-semibold text-[#F5F5F5]">
                       Keranjang Pesanan ({cartSummary.totalItems})
                     </h3>
                   </div>
                   {cart.length > 0 && (
                     <button
+                      type="button"
                       onClick={clearCart}
-                      className="text-xs text-[#7A7A84] hover:text-rose-400 transition-colors"
+                      className="text-xs text-[#8A8A91] hover:text-red-400 transition-colors"
                     >
                       Kosongkan
                     </button>
@@ -514,13 +513,13 @@ export function TransactionsPage() {
 
                 {/* Items in Cart */}
                 {cart.length === 0 ? (
-                  <div className="py-12 text-center text-xs text-[#7A7A84]">
-                    <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <div className="py-10 text-center text-xs text-[#8A8A91]">
+                    <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-30 text-[#8A8A91]" />
                     <p>Keranjang masih kosong.</p>
-                    <p className="text-[11px] mt-1">Pilih menu di sebelah kiri untuk menambah pesanan.</p>
+                    <p className="text-[11px] mt-0.5">Pilih menu di samping untuk menambah pesanan.</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-[#22222A]/60 max-h-56 overflow-y-auto py-2 pr-1">
+                  <div className="divide-y divide-[#242428]/60 max-h-52 overflow-y-auto py-2 pr-1">
                     {cart.map(item => {
                       const currentProd = products.find(p => p.id === item.product.id) || item.product;
                       const isMax = item.quantity >= currentProd.stock;
@@ -528,24 +527,24 @@ export function TransactionsPage() {
                       return (
                         <div key={item.product.id} className="py-2 flex items-center justify-between gap-2 text-xs">
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-[#F0F0F2] truncate">{item.product.name}</p>
-                            <p className="text-[11px] text-[#7A7A84]">
+                            <p className="font-medium text-[#F5F5F5] truncate">{item.product.name}</p>
+                            <p className="text-[11px] text-[#8A8A91] tabular-nums">
                               {formatRupiah(item.product.selling_price)} / {item.product.unit}
-                              <span className="ml-1 text-[10px] text-[#7A7A84]/70">(Sisa: {currentProd.stock})</span>
+                              <span className="ml-1 text-[10px] text-[#8A8A91]">(Sisa: {currentProd.stock})</span>
                             </p>
                           </div>
 
                           {/* Quantity Controls */}
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-1 shrink-0">
                             <button
                               type="button"
                               onClick={() => updateCartQuantity(item.product.id, -1)}
-                              className="w-6 h-6 rounded bg-[#16161B] hover:bg-[#22222A] text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-colors"
+                              className="w-6 h-6 rounded bg-[#1C1C20] hover:bg-[#242428] text-[#F5F5F5] flex items-center justify-center font-bold text-xs transition-colors"
                               title="Kurangi jumlah"
                             >
                               -
                             </button>
-                            <span className="w-6 text-center font-semibold text-[#F0F0F2]">
+                            <span className="w-6 text-center font-semibold text-[#F5F5F5] tabular-nums">
                               {item.quantity}
                             </span>
                             <button
@@ -554,8 +553,8 @@ export function TransactionsPage() {
                               onClick={() => updateCartQuantity(item.product.id, 1)}
                               className={`w-6 h-6 rounded flex items-center justify-center font-bold text-xs transition-colors ${
                                 isMax
-                                  ? 'bg-[#16161B] opacity-40 cursor-not-allowed text-[#7A7A84]'
-                                  : 'bg-[#16161B] hover:bg-[#22222A] text-[#F0F0F2]'
+                                  ? 'bg-[#1C1C20] opacity-40 cursor-not-allowed text-[#8A8A91]'
+                                  : 'bg-[#1C1C20] hover:bg-[#242428] text-[#F5F5F5]'
                               }`}
                               title={isMax ? 'Maksimal stok tercapai' : 'Tambah jumlah'}
                             >
@@ -565,7 +564,7 @@ export function TransactionsPage() {
 
                           {/* Subtotal */}
                           <div className="text-right min-w-[70px] shrink-0">
-                            <p className="font-semibold text-[#F0F0F2]">
+                            <p className="font-semibold text-[#F5F5F5] tabular-nums">
                               {formatRupiah(item.quantity * item.product.selling_price)}
                             </p>
                           </div>
@@ -573,7 +572,7 @@ export function TransactionsPage() {
                           <button
                             type="button"
                             onClick={() => removeFromCart(item.product.id)}
-                            className="text-[#7A7A84] hover:text-rose-400 p-1 transition-colors"
+                            className="text-[#8A8A91] hover:text-red-400 p-1 transition-colors"
                             title="Hapus dari keranjang"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -586,7 +585,7 @@ export function TransactionsPage() {
               </div>
 
               {/* Checkout Form */}
-              <form onSubmit={handleCheckout} className="pt-4 border-t border-[#22222A] space-y-3">
+              <form onSubmit={handleCheckout} className="pt-3 border-t border-[#242428] space-y-3">
                 {/* Customer name and notes */}
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -594,28 +593,28 @@ export function TransactionsPage() {
                     placeholder="Nama Pelanggan (opsional)"
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                    className="w-full px-3 py-1.5 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                   />
                   <input
                     type="text"
                     placeholder="Catatan / Meja (opsional)"
                     value={transactionNotes}
                     onChange={e => setTransactionNotes(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                    className="w-full px-3 py-1.5 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                   />
                 </div>
 
                 {/* Payment Method Selector */}
                 <div>
-                  <p className="text-[11px] font-medium text-[#7A7A84] mb-1.5">Metode Pembayaran:</p>
+                  <p className="text-[11px] font-medium text-[#8A8A91] mb-1.5">Metode Pembayaran:</p>
                   <div className="grid grid-cols-4 gap-1.5 text-xs font-semibold">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('qris')}
                       className={`py-2 px-1 rounded-lg border text-center transition-colors flex flex-col items-center gap-1 ${
                         paymentMethod === 'qris'
-                          ? 'bg-[#16161B] border-[#10B981] text-[#10B981]'
-                          : 'bg-[#101013] border-[#22222A] text-[#7A7A84] hover:text-[#F0F0F2]'
+                          ? 'bg-[#1C1C20] border-[#22C55E] text-[#F5F5F5]'
+                          : 'bg-[#141416] border-[#242428] text-[#8A8A91] hover:text-[#F5F5F5]'
                       }`}
                     >
                       <QrCode className="w-4 h-4" />
@@ -627,8 +626,8 @@ export function TransactionsPage() {
                       onClick={() => setPaymentMethod('cash')}
                       className={`py-2 px-1 rounded-lg border text-center transition-colors flex flex-col items-center gap-1 ${
                         paymentMethod === 'cash'
-                          ? 'bg-[#16161B] border-[#10B981] text-[#10B981]'
-                          : 'bg-[#101013] border-[#22222A] text-[#7A7A84] hover:text-[#F0F0F2]'
+                          ? 'bg-[#1C1C20] border-[#22C55E] text-[#F5F5F5]'
+                          : 'bg-[#141416] border-[#242428] text-[#8A8A91] hover:text-[#F5F5F5]'
                       }`}
                     >
                       <DollarSign className="w-4 h-4" />
@@ -640,8 +639,8 @@ export function TransactionsPage() {
                       onClick={() => setPaymentMethod('transfer')}
                       className={`py-2 px-1 rounded-lg border text-center transition-colors flex flex-col items-center gap-1 ${
                         paymentMethod === 'transfer'
-                          ? 'bg-[#16161B] border-[#10B981] text-[#10B981]'
-                          : 'bg-[#101013] border-[#22222A] text-[#7A7A84] hover:text-[#F0F0F2]'
+                          ? 'bg-[#1C1C20] border-[#22C55E] text-[#F5F5F5]'
+                          : 'bg-[#141416] border-[#242428] text-[#8A8A91] hover:text-[#F5F5F5]'
                       }`}
                     >
                       <CreditCard className="w-4 h-4" />
@@ -653,8 +652,8 @@ export function TransactionsPage() {
                       onClick={() => setPaymentMethod('other')}
                       className={`py-2 px-1 rounded-lg border text-center transition-colors flex flex-col items-center gap-1 ${
                         paymentMethod === 'other'
-                          ? 'bg-[#16161B] border-[#10B981] text-[#10B981]'
-                          : 'bg-[#101013] border-[#22222A] text-[#7A7A84] hover:text-[#F0F0F2]'
+                          ? 'bg-[#1C1C20] border-[#22C55E] text-[#F5F5F5]'
+                          : 'bg-[#141416] border-[#242428] text-[#8A8A91] hover:text-[#F5F5F5]'
                       }`}
                     >
                       <HelpCircle className="w-4 h-4" />
@@ -664,14 +663,14 @@ export function TransactionsPage() {
                 </div>
 
                 {/* Subtotal & Profit preview */}
-                <div className="p-3 rounded-lg bg-[#16161B] border border-[#22222A]/60 space-y-1 text-xs">
-                  <div className="flex justify-between text-[#7A7A84]">
+                <div className="p-2.5 rounded-lg bg-[#1C1C20] border border-[#242428] space-y-1 text-xs">
+                  <div className="flex justify-between text-[#8A8A91]">
                     <span>Subtotal Penjualan</span>
-                    <span className="font-semibold text-[#F0F0F2]">{formatRupiah(cartSummary.totalAmount)}</span>
+                    <span className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(cartSummary.totalAmount)}</span>
                   </div>
-                  <div className="flex justify-between text-[11px] text-[#7A7A84]">
+                  <div className="flex justify-between text-[11px] text-[#8A8A91]">
                     <span>Estimasi Laba Kotor</span>
-                    <span className="text-[#10B981] font-medium">
+                    <span className="text-[#22C55E] font-medium tabular-nums">
                       +{formatRupiah(cartSummary.profit)} ({cartSummary.margin}%)
                     </span>
                   </div>
@@ -681,17 +680,17 @@ export function TransactionsPage() {
                 <button
                   type="submit"
                   disabled={cart.length === 0 || isCheckingOut}
-                  className="w-full py-2.5 px-4 text-xs font-bold text-black bg-[#10B981] hover:bg-[#059669] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 text-xs font-bold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center justify-center gap-2 active:scale-[0.99]"
                 >
                   {isCheckingOut ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin text-black" />
-                      <span>Menyimpan ke Supabase...</span>
+                      <Loader2 className="w-4 h-4 animate-spin text-[#0B0B0C]" />
+                      <span>Menyimpan Transaksi...</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-                      <span>Selesaikan Transaksi ({formatRupiah(cartSummary.totalAmount)})</span>
+                      <span className="tabular-nums">Selesaikan ({formatRupiah(cartSummary.totalAmount)})</span>
                     </>
                   )}
                 </button>
@@ -706,19 +705,19 @@ export function TransactionsPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             {/* Search */}
             <div className="relative flex-1 max-w-sm">
-              <Search className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Cari nota, pelanggan, atau menu..."
                 value={historySearch}
                 onChange={e => setHistorySearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs bg-[#101013] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full pl-9 pr-3 py-2 text-xs bg-[#141416] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
               {/* Date Filter */}
-              <div className="flex items-center gap-1 p-1 bg-[#101013] border border-[#22222A] rounded-lg">
+              <div className="flex items-center gap-1 p-1 bg-[#141416] border border-[#242428] rounded-lg">
                 {[
                   { id: 'all', label: 'Semua' },
                   { id: 'today', label: 'Hari Ini' },
@@ -727,11 +726,12 @@ export function TransactionsPage() {
                 ].map(opt => (
                   <button
                     key={opt.id}
+                    type="button"
                     onClick={() => setHistoryDateFilter(opt.id)}
                     className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
                       historyDateFilter === opt.id
-                        ? 'bg-[#16161B] text-[#10B981]'
-                        : 'text-[#7A7A84] hover:text-[#F0F0F2]'
+                        ? 'bg-[#1C1C20] text-[#F5F5F5]'
+                        : 'text-[#8A8A91] hover:text-[#F5F5F5]'
                     }`}
                   >
                     {opt.label}
@@ -743,7 +743,7 @@ export function TransactionsPage() {
               <select
                 value={historyMethodFilter}
                 onChange={e => setHistoryMethodFilter(e.target.value)}
-                className="px-2.5 py-2 text-xs bg-[#101013] border border-[#22222A] rounded-lg text-[#F0F0F2] focus:outline-hidden focus:border-[#10B981]"
+                className="px-2.5 py-1.5 text-xs bg-[#141416] border border-[#242428] rounded-lg text-[#F5F5F5] focus:outline-hidden focus:border-[#22C55E]"
               >
                 <option value="all">Semua Metode</option>
                 <option value="qris">QRIS</option>
@@ -756,72 +756,74 @@ export function TransactionsPage() {
 
           {/* Transactions Table with Loading & Empty State */}
           {isLoadingData && transactions.length === 0 ? (
-            <div className="p-6 rounded-xl bg-[#101013] border border-[#22222A] space-y-3 animate-pulse">
+            <div className="p-6 rounded-xl bg-[#141416] border border-[#242428] space-y-3 animate-pulse">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-10 bg-[#16161B] rounded-lg" />
+                <div key={i} className="h-9 bg-[#1C1C20] rounded-lg" />
               ))}
             </div>
           ) : filteredHistory.length === 0 ? (
-            <div className="p-12 text-center rounded-xl bg-[#101013] border border-[#22222A]">
-              <Receipt className="w-10 h-10 text-[#7A7A84] mx-auto mb-3 opacity-40" />
-              <h3 className="text-sm font-semibold text-[#F0F0F2]">Tidak ada transaksi ditemukan</h3>
-              <p className="text-xs text-[#7A7A84] mt-1">
+            <div className="p-10 text-center rounded-xl bg-[#141416] border border-[#242428]">
+              <Receipt className="w-8 h-8 text-[#8A8A91] mx-auto mb-2 opacity-40" />
+              <h3 className="text-sm font-semibold text-[#F5F5F5]">Tidak ada transaksi ditemukan</h3>
+              <p className="text-xs text-[#8A8A91] mt-1">
                 Ubah filter atau catat penjualan baru di kasir.
               </p>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-[#101013] border border-[#22222A] overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="text-[#7A7A84] border-b border-[#22222A] font-medium">
+            <div className="p-3 sm:p-4 rounded-xl bg-[#141416] border border-[#242428] overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[620px]">
+                <thead className="text-[#8A8A91] border-b border-[#242428] font-medium">
                   <tr>
-                    <th className="pb-3 px-3">No. Nota</th>
-                    <th className="pb-3 px-3">Tanggal & Waktu</th>
-                    <th className="pb-3 px-3">Pelanggan</th>
-                    <th className="pb-3 px-3">Detail Pesanan</th>
-                    <th className="pb-3 px-3">Metode</th>
-                    <th className="pb-3 px-3 text-right">Total Penjualan</th>
-                    <th className="pb-3 px-3 text-right">Laba Kotor</th>
-                    <th className="pb-3 px-3 text-center">Aksi</th>
+                    <th className="pb-2.5 px-3">No. Nota</th>
+                    <th className="pb-2.5 px-3">Waktu</th>
+                    <th className="pb-2.5 px-3">Pelanggan</th>
+                    <th className="pb-2.5 px-3">Pesanan</th>
+                    <th className="pb-2.5 px-3">Metode</th>
+                    <th className="pb-2.5 px-3 text-right">Total</th>
+                    <th className="pb-2.5 px-3 text-right">Laba Kotor</th>
+                    <th className="pb-2.5 px-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#22222A]/60">
+                <tbody className="divide-y divide-[#242428]/60">
                   {filteredHistory.map(tx => (
-                    <tr key={tx.id} className="hover:bg-[#16161B]/40 transition-colors">
-                      <td className="py-3 px-3 font-mono font-medium text-[#F0F0F2]">
+                    <tr key={tx.id} className="hover:bg-[#1C1C20]/40 transition-colors">
+                      <td className="py-2.5 px-3 font-mono font-medium text-[#F5F5F5]">
                         {tx.invoice_number}
                       </td>
-                      <td className="py-3 px-3 text-[#7A7A84] whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-[#8A8A91] whitespace-nowrap tabular-nums">
                         {formatDateTime(tx.date)}
                       </td>
-                      <td className="py-3 px-3 text-[#F0F0F2]">
+                      <td className="py-2.5 px-3 text-[#F5F5F5]">
                         {tx.customer_name || '-'}
                       </td>
-                      <td className="py-3 px-3 text-[#F0F0F2] max-w-[220px] truncate">
+                      <td className="py-2.5 px-3 text-[#F5F5F5] max-w-[200px] truncate">
                         {Array.isArray(tx.items) && tx.items.length > 0
                           ? tx.items.map(i => `${i.quantity}x ${i.product_name}`).join(', ')
                           : '-'}
                       </td>
-                      <td className="py-3 px-3 uppercase text-[10px] font-semibold text-[#7A7A84]">
+                      <td className="py-2.5 px-3 uppercase text-[10px] font-semibold text-[#8A8A91]">
                         {tx.payment_method}
                       </td>
-                      <td className="py-3 px-3 text-right font-semibold text-[#F0F0F2]">
+                      <td className="py-2.5 px-3 text-right font-semibold text-[#F5F5F5] tabular-nums">
                         {formatRupiah(tx.total_amount)}
                       </td>
-                      <td className="py-3 px-3 text-right font-medium text-[#10B981]">
+                      <td className="py-2.5 px-3 text-right font-medium text-[#22C55E] tabular-nums">
                         +{formatRupiah(tx.profit)}
                       </td>
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-2.5 px-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <button
+                            type="button"
                             onClick={() => setReceiptTx(tx)}
-                            className="p-1.5 text-[#10B981] hover:bg-[#16161B] rounded-md transition-colors"
+                            className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#1C1C20] rounded-md transition-colors"
                             title="Lihat Struk"
                           >
                             <Receipt className="w-3.5 h-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => setDeletingTx(tx)}
-                            className="p-1.5 text-[#7A7A84] hover:text-rose-400 hover:bg-[#16161B] rounded-md transition-colors"
+                            className="p-1.5 text-[#8A8A91] hover:text-red-400 hover:bg-[#1C1C20] rounded-md transition-colors"
                             title="Hapus Nota"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -847,73 +849,73 @@ export function TransactionsPage() {
           maxWidth="sm"
         >
           <div className="space-y-4 text-xs">
-            {/* Business header inside receipt */}
-            <div className="text-center pb-3 border-b border-[#22222A] space-y-1">
-              <h4 className="font-bold text-sm text-[#F0F0F2]">{profile.business_name}</h4>
-              <p className="text-[11px] text-[#7A7A84]">{profile.address || 'Kedai UMKM'}</p>
-              <p className="text-[10px] text-[#7A7A84]">WA: {profile.phone || '-'}</p>
+            {/* Business header */}
+            <div className="text-center pb-3 border-b border-[#242428] space-y-0.5">
+              <h4 className="font-bold text-sm text-[#F5F5F5]">{profile.business_name || 'Kedai UMKM'}</h4>
+              <p className="text-[11px] text-[#8A8A91]">{profile.address || 'Kedai F&B'}</p>
+              {profile.phone && <p className="text-[10px] text-[#8A8A91]">Telp/WA: {profile.phone}</p>}
             </div>
 
             {/* Meta */}
-            <div className="space-y-1 text-[#7A7A84] text-[11px]">
+            <div className="space-y-1 text-[#8A8A91] text-[11px]">
               <div className="flex justify-between">
                 <span>No. Nota:</span>
-                <span className="font-mono text-[#F0F0F2]">{receiptTx.invoice_number}</span>
+                <span className="font-mono text-[#F5F5F5]">{receiptTx.invoice_number}</span>
               </div>
               <div className="flex justify-between">
                 <span>Waktu:</span>
-                <span className="text-[#F0F0F2]">{formatDateTime(receiptTx.date)}</span>
+                <span className="text-[#F5F5F5] tabular-nums">{formatDateTime(receiptTx.date)}</span>
               </div>
               {receiptTx.customer_name && (
                 <div className="flex justify-between">
                   <span>Pelanggan:</span>
-                  <span className="text-[#F0F0F2]">{receiptTx.customer_name}</span>
+                  <span className="text-[#F5F5F5]">{receiptTx.customer_name}</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span>Metode Bayar:</span>
-                <span className="uppercase text-[#10B981] font-semibold">{receiptTx.payment_method}</span>
+                <span>Metode:</span>
+                <span className="uppercase text-[#F5F5F5] font-semibold">{receiptTx.payment_method}</span>
               </div>
             </div>
 
             {/* Items */}
-            <div className="py-2 border-y border-[#22222A] divide-y divide-[#22222A]/50">
+            <div className="py-2 border-y border-[#242428] divide-y divide-[#242428]/50">
               {receiptTx.items.map((item, idx) => (
                 <div key={idx} className="py-1.5 flex justify-between">
                   <div>
-                    <p className="font-medium text-[#F0F0F2]">{item.product_name}</p>
-                    <p className="text-[10px] text-[#7A7A84]">
+                    <p className="font-medium text-[#F5F5F5]">{item.product_name}</p>
+                    <p className="text-[10px] text-[#8A8A91] tabular-nums">
                       {item.quantity} x {formatRupiah(item.unit_price)}
                     </p>
                   </div>
-                  <span className="font-semibold text-[#F0F0F2]">{formatRupiah(item.subtotal)}</span>
+                  <span className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(item.subtotal)}</span>
                 </div>
               ))}
             </div>
 
             {/* Totals */}
             <div className="space-y-1 pt-1">
-              <div className="flex justify-between text-sm font-bold text-[#F0F0F2]">
+              <div className="flex justify-between text-sm font-bold text-[#F5F5F5]">
                 <span>Total Bayar</span>
-                <span>{formatRupiah(receiptTx.total_amount)}</span>
+                <span className="tabular-nums">{formatRupiah(receiptTx.total_amount)}</span>
               </div>
-              <div className="flex justify-between text-[11px] text-[#10B981]">
+              <div className="flex justify-between text-[11px] text-[#22C55E]">
                 <span>Laba Kotor</span>
-                <span>+{formatRupiah(receiptTx.profit)}</span>
+                <span className="tabular-nums">+{formatRupiah(receiptTx.profit)}</span>
               </div>
             </div>
 
             {/* Footer note */}
-            <div className="text-center pt-2 text-[10px] text-[#7A7A84]">
+            <div className="text-center pt-2 text-[10px] text-[#8A8A91]">
               <p>{profile.receipt_footer || 'Terima kasih atas kunjungan Anda!'}</p>
             </div>
 
-            {/* Actions: Print and Share to WhatsApp */}
-            <div className="pt-3 border-t border-[#22222A] grid grid-cols-2 gap-2">
+            {/* Actions */}
+            <div className="pt-3 border-t border-[#242428] grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="py-2 px-3 rounded-lg bg-[#16161B] hover:bg-[#22222A] text-[#F0F0F2] flex items-center justify-center gap-1.5 font-medium transition-colors"
+                className="py-2 px-3 rounded-lg bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] text-[#F5F5F5] flex items-center justify-center gap-1.5 font-medium transition-colors"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Cetak Nota</span>
@@ -923,7 +925,7 @@ export function TransactionsPage() {
                 href={`https://wa.me/?text=${generateWaShareText(receiptTx)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-2 px-3 rounded-lg bg-[#10B981] hover:bg-[#059669] text-black font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                className="py-2 px-3 rounded-lg bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] font-semibold flex items-center justify-center gap-1.5 transition-colors"
               >
                 <Share2 className="w-3.5 h-3.5" />
                 <span>Kirim WhatsApp</span>
@@ -938,19 +940,19 @@ export function TransactionsPage() {
         isOpen={!!deletingTx}
         onClose={() => !isDeleting && setDeletingTx(null)}
         title="Hapus Nota Transaksi"
-        subtitle="Konfirmasi penghapusan data penjualan dari Supabase"
+        subtitle="Konfirmasi penghapusan data penjualan"
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
-            Apakah Anda yakin ingin menghapus nota transaksi <strong>{deletingTx?.invoice_number}</strong> senilai <strong>{formatRupiah(deletingTx?.total_amount || 0)}</strong>? Data penjualan dan item terkait akan dihapus secara permanen dari Supabase.
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+            Apakah Anda yakin ingin menghapus nota transaksi <strong>{deletingTx?.invoice_number}</strong> senilai <strong className="tabular-nums">{formatRupiah(deletingTx?.total_amount || 0)}</strong>? Data penjualan akan dihapus secara permanen.
           </div>
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#22222A]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#242428]">
             <button
               type="button"
               disabled={isDeleting}
               onClick={() => setDeletingTx(null)}
-              className="px-4 py-2 text-xs font-medium text-[#7A7A84] hover:text-[#F0F0F2] bg-[#16161B] rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-xs font-medium text-[#8A8A91] hover:text-[#F5F5F5] bg-[#141416] border border-[#242428] rounded-lg transition-colors disabled:opacity-50"
             >
               Batal
             </button>
@@ -958,7 +960,7 @@ export function TransactionsPage() {
               type="button"
               disabled={isDeleting}
               onClick={handleDeleteTransactionConfirm}
-              className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
             >
               {isDeleting ? (
                 <>
@@ -966,10 +968,7 @@ export function TransactionsPage() {
                   <span>Menghapus...</span>
                 </>
               ) : (
-                <>
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Hapus Transaksi</span>
-                </>
+                <span>Hapus Transaksi</span>
               )}
             </button>
           </div>

@@ -10,7 +10,6 @@ import {
   Edit2,
   Trash2,
   Package,
-  TrendingUp,
   CheckCircle,
   Loader2,
 } from 'lucide-react';
@@ -38,7 +37,7 @@ export function ProductsPage() {
     if (!toast) return;
     const timer = setTimeout(() => {
       setToast(null);
-    }, 3500);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -128,11 +127,11 @@ export function ProductsPage() {
         setToast({ message: `Produk "${payload.name}" berhasil diperbarui`, type: 'success' });
       } else {
         await addProduct(payload);
-        setToast({ message: `Produk "${payload.name}" berhasil ditambahkan ke Supabase`, type: 'success' });
+        setToast({ message: `Produk "${payload.name}" berhasil ditambahkan`, type: 'success' });
       }
       setIsModalOpen(false);
     } catch (err: any) {
-      setFormError(err?.message || 'Gagal menyimpan produk ke Supabase');
+      setFormError(err?.message || 'Gagal menyimpan produk');
     } finally {
       setIsSubmitting(false);
     }
@@ -146,31 +145,32 @@ export function ProductsPage() {
       setToast({ message: `Produk "${deletingProduct.name}" berhasil dihapus`, type: 'success' });
       setDeletingProduct(null);
     } catch (err: any) {
-      setToast({ message: err?.message || 'Gagal menghapus produk dari Supabase', type: 'error' });
+      setToast({ message: err?.message || 'Gagal menghapus produk', type: 'error' });
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <div className="space-y-6 pb-20 md:pb-8">
+    <div className="space-y-5 pb-24 md:pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F0F0F2]">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
             Katalog Produk & Menu
           </h1>
-          <p className="text-xs text-[#7A7A84] mt-0.5">
-            Kelola HPP, harga jual, stok, dan pantau margin profit per porsi dari Supabase.
+          <p className="text-xs text-[#8A8A91] mt-0.5">
+            Kelola HPP, harga jual, stok, dan margin keuntungan tiap item.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-black bg-[#10B981] hover:bg-[#059669] rounded-lg transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98]"
           >
-            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Tambah Produk</span>
           </button>
         </div>
@@ -181,8 +181,8 @@ export function ProductsPage() {
         <div
           className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
             toast.type === 'success'
-              ? 'bg-[#10B981]/10 border-[#10B981]/30 text-[#10B981]'
-              : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+              ? 'bg-[#22C55E]/10 border-[#22C55E]/20 text-[#22C55E]'
+              : 'bg-red-500/10 border-red-500/20 text-red-400'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -194,8 +194,9 @@ export function ProductsPage() {
             <span>{toast.message}</span>
           </div>
           <button
+            type="button"
             onClick={() => setToast(null)}
-            className="text-[#7A7A84] hover:text-[#F0F0F2] text-sm leading-none px-1"
+            className="text-[#8A8A91] hover:text-[#F5F5F5] text-sm leading-none px-1"
             aria-label="Tutup notifikasi"
           >
             &times;
@@ -207,13 +208,13 @@ export function ProductsPage() {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Cari nama produk / menu..."
+            placeholder="Cari produk / menu..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs bg-[#101013] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981] transition-colors"
+            className="w-full pl-9 pr-3 py-2 text-xs bg-[#141416] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E] transition-colors"
           />
         </div>
 
@@ -222,11 +223,12 @@ export function ProductsPage() {
           {categories.map(cat => (
             <button
               key={cat}
+              type="button"
               onClick={() => setSelectedCategory(cat)}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors ${
                 selectedCategory === cat
-                  ? 'bg-[#16161B] text-[#10B981] border border-[#22222A]'
-                  : 'text-[#7A7A84] hover:text-[#F0F0F2] hover:bg-[#101013]'
+                  ? 'bg-[#141416] text-[#F5F5F5] border border-[#242428]'
+                  : 'text-[#8A8A91] hover:text-[#F5F5F5]'
               }`}
             >
               {cat === 'all' ? 'Semua Kategori' : cat}
@@ -239,38 +241,39 @@ export function ProductsPage() {
       {isLoadingData && products.length === 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="p-4 rounded-xl bg-[#101013] border border-[#22222A] animate-pulse space-y-3">
+            <div key={i} className="p-4 rounded-xl bg-[#141416] border border-[#242428] animate-pulse space-y-3">
               <div className="flex items-center justify-between">
-                <div className="h-3 w-20 bg-[#16161B] rounded" />
-                <div className="h-3 w-16 bg-[#16161B] rounded" />
+                <div className="h-3 w-20 bg-[#1C1C20] rounded" />
+                <div className="h-3 w-16 bg-[#1C1C20] rounded" />
               </div>
-              <div className="h-4 w-36 bg-[#16161B] rounded" />
-              <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-[#16161B]">
-                <div className="h-8 bg-[#22222A]/50 rounded" />
-                <div className="h-8 bg-[#22222A]/50 rounded" />
-                <div className="h-8 bg-[#22222A]/50 rounded" />
-                <div className="h-8 bg-[#22222A]/50 rounded" />
+              <div className="h-4 w-36 bg-[#1C1C20] rounded" />
+              <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-[#1C1C20]">
+                <div className="h-7 bg-[#242428]/50 rounded" />
+                <div className="h-7 bg-[#242428]/50 rounded" />
+                <div className="h-7 bg-[#242428]/50 rounded" />
+                <div className="h-7 bg-[#242428]/50 rounded" />
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-[#22222A]">
-                <div className="h-6 w-24 bg-[#16161B] rounded" />
-                <div className="h-6 w-14 bg-[#16161B] rounded" />
+              <div className="flex items-center justify-between pt-2 border-t border-[#242428]">
+                <div className="h-6 w-24 bg-[#1C1C20] rounded" />
+                <div className="h-6 w-14 bg-[#1C1C20] rounded" />
               </div>
             </div>
           ))}
         </div>
       ) : filteredProducts.length === 0 ? (
         /* Empty State */
-        <div className="p-12 text-center rounded-xl bg-[#101013] border border-[#22222A]">
-          <Package className="w-10 h-10 text-[#7A7A84] mx-auto mb-3 opacity-40" />
-          <h3 className="text-sm font-semibold text-[#F0F0F2]">Tidak ada produk ditemukan</h3>
-          <p className="text-xs text-[#7A7A84] mt-1 max-w-sm mx-auto">
+        <div className="p-12 text-center rounded-xl bg-[#141416] border border-[#242428]">
+          <Package className="w-8 h-8 text-[#8A8A91] mx-auto mb-2 opacity-40" />
+          <h3 className="text-sm font-semibold text-[#F5F5F5]">Tidak ada produk ditemukan</h3>
+          <p className="text-xs text-[#8A8A91] mt-1 max-w-sm mx-auto">
             {searchQuery
               ? `Pencarian "${searchQuery}" tidak cocok dengan menu manapun.`
               : 'Belum ada produk di katalog usaha Anda. Tambahkan produk pertama Anda sekarang.'}
           </p>
           <button
+            type="button"
             onClick={openAddModal}
-            className="mt-4 px-4 py-2 text-xs font-medium text-black bg-[#10B981] rounded-lg hover:bg-[#059669] transition-colors"
+            className="mt-4 px-4 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] rounded-lg hover:bg-[#16A34A] transition-colors"
           >
             Tambah Produk Sekarang
           </button>
@@ -285,11 +288,11 @@ export function ProductsPage() {
             return (
               <div
                 key={product.id}
-                className="p-4 rounded-xl bg-[#101013] border border-[#22222A] hover:border-[#33333F] transition-all flex flex-col justify-between"
+                className="p-4 rounded-xl bg-[#141416] border border-[#242428] hover:border-[#323238] transition-all flex flex-col justify-between"
               >
                 <div>
                   {/* Category & Status */}
-                  <div className="flex items-center justify-between text-[11px] text-[#7A7A84] mb-1.5 font-medium">
+                  <div className="flex items-center justify-between text-[11px] text-[#8A8A91] mb-1.5 font-medium">
                     <span>{product.category}</span>
                     {isLowStock ? (
                       <span className="text-amber-400 font-medium flex items-center gap-1">
@@ -297,53 +300,55 @@ export function ProductsPage() {
                         Stok Menipis
                       </span>
                     ) : (
-                      <span className="text-[#10B981]">Stok Aman</span>
+                      <span className="text-[#8A8A91]">Stok Aman</span>
                     )}
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-sm font-semibold text-[#F0F0F2] tracking-tight">
+                  <h3 className="text-sm font-semibold text-[#F5F5F5] tracking-tight">
                     {product.name}
                   </h3>
 
                   {/* Price & Profit Specs */}
-                  <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-[#16161B] border border-[#22222A]/60 text-xs">
+                  <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-[#1C1C20] border border-[#242428] text-xs">
                     <div>
-                      <p className="text-[10px] text-[#7A7A84]">Harga Jual</p>
-                      <p className="font-semibold text-[#F0F0F2]">{formatRupiah(product.selling_price)}</p>
+                      <p className="text-[10px] text-[#8A8A91]">Harga Jual</p>
+                      <p className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(product.selling_price)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-[#7A7A84]">HPP (Modal)</p>
-                      <p className="font-medium text-[#7A7A84]">{formatRupiah(product.hpp)}</p>
+                      <p className="text-[10px] text-[#8A8A91]">HPP (Modal)</p>
+                      <p className="font-medium text-[#8A8A91] tabular-nums">{formatRupiah(product.hpp)}</p>
                     </div>
-                    <div className="pt-1 border-t border-[#22222A]/60">
-                      <p className="text-[10px] text-[#7A7A84]">Profit / Unit</p>
-                      <p className="font-semibold text-[#10B981]">+{formatRupiah(profit)}</p>
+                    <div className="pt-1 border-t border-[#242428]">
+                      <p className="text-[10px] text-[#8A8A91]">Laba / Porsi</p>
+                      <p className="font-semibold text-[#22C55E] tabular-nums">+{formatRupiah(profit)}</p>
                     </div>
-                    <div className="pt-1 border-t border-[#22222A]/60">
-                      <p className="text-[10px] text-[#7A7A84]">Margin</p>
-                      <p className="font-semibold text-[#10B981]">{margin}%</p>
+                    <div className="pt-1 border-t border-[#242428]">
+                      <p className="text-[10px] text-[#8A8A91]">Margin</p>
+                      <p className="font-semibold text-[#22C55E] tabular-nums">{margin}%</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Stock Controls & Actions */}
-                <div className="pt-2 border-t border-[#22222A] flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-[#242428] flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <button
+                      type="button"
                       onClick={() => adjustStock(product.id, -1)}
-                      className="w-7 h-7 rounded-md bg-[#16161B] hover:bg-[#22222A] active:scale-95 text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-all cursor-pointer"
+                      className="w-7 h-7 rounded-md bg-[#1C1C20] hover:bg-[#242428] active:scale-95 text-[#F5F5F5] flex items-center justify-center font-bold text-xs transition-all"
                       title="Kurangi 1 Stok"
                     >
                       -
                     </button>
-                    <span className="text-xs font-semibold px-1 text-[#F0F0F2]">
+                    <span className="text-xs font-semibold px-1 text-[#F5F5F5] tabular-nums">
                       {formatNumber(product.stock)}{' '}
-                      <span className="text-[10px] text-[#7A7A84] font-normal">{product.unit}</span>
+                      <span className="text-[10px] text-[#8A8A91] font-normal">{product.unit}</span>
                     </span>
                     <button
+                      type="button"
                       onClick={() => adjustStock(product.id, 1)}
-                      className="w-7 h-7 rounded-md bg-[#16161B] hover:bg-[#22222A] active:scale-95 text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-all cursor-pointer"
+                      className="w-7 h-7 rounded-md bg-[#1C1C20] hover:bg-[#242428] active:scale-95 text-[#F5F5F5] flex items-center justify-center font-bold text-xs transition-all"
                       title="Tambah 1 Stok"
                     >
                       +
@@ -352,15 +357,17 @@ export function ProductsPage() {
 
                   <div className="flex items-center gap-1">
                     <button
+                      type="button"
                       onClick={() => openEditModal(product)}
-                      className="p-1.5 text-[#7A7A84] hover:text-[#F0F0F2] hover:bg-[#16161B] rounded-lg transition-colors"
+                      className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#1C1C20] rounded-lg transition-colors"
                       title="Edit Produk"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDeletingProduct(product)}
-                      className="p-1.5 text-[#7A7A84] hover:text-rose-400 hover:bg-[#16161B] rounded-lg transition-colors"
+                      className="p-1.5 text-[#8A8A91] hover:text-red-400 hover:bg-[#1C1C20] rounded-lg transition-colors"
                       title="Hapus Produk"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -378,19 +385,19 @@ export function ProductsPage() {
         isOpen={isModalOpen}
         onClose={() => !isSubmitting && setIsModalOpen(false)}
         title={editingProduct ? 'Edit Produk' : 'Tambah Produk / Menu Baru'}
-        subtitle="Hitung otomatis profit bersih dan margin keuntungan langsung ke Supabase"
+        subtitle="Hitung otomatis laba bersih dan margin keuntungan per item"
         maxWidth="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {formError && (
-            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400 flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>{formError}</span>
             </div>
           )}
 
           <div>
-            <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+            <label className="block text-xs font-medium text-[#8A8A91] mb-1">
               Nama Produk / Menu *
             </label>
             <input
@@ -399,19 +406,19 @@ export function ProductsPage() {
               placeholder="Contoh: Es Kopi Susu Aren, Toast Cokelat"
               value={formName}
               onChange={e => setFormName(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+              className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
                 Kategori
               </label>
               <select
                 value={formCategory}
                 onChange={e => setFormCategory(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] focus:outline-hidden focus:border-[#22C55E]"
               >
                 <option value="Minuman Kopi">Minuman Kopi</option>
                 <option value="Non-Kopi">Non-Kopi</option>
@@ -424,7 +431,7 @@ export function ProductsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
                 Satuan Jual
               </label>
               <input
@@ -432,7 +439,7 @@ export function ProductsPage() {
                 placeholder="cup / porsi / pcs / botol"
                 value={formUnit}
                 onChange={e => setFormUnit(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
           </div>
@@ -440,7 +447,7 @@ export function ProductsPage() {
           {/* HPP and Selling Price */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
                 HPP Modal (Rp) *
               </label>
               <input
@@ -450,12 +457,12 @@ export function ProductsPage() {
                 placeholder="0"
                 value={formHpp}
                 onChange={e => setFormHpp(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
                 Harga Jual (Rp) *
               </label>
               <input
@@ -465,45 +472,46 @@ export function ProductsPage() {
                 placeholder="0"
                 value={formSellingPrice}
                 onChange={e => setFormSellingPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
           </div>
 
-          {/* Automatic Live Profit and Margin Calculation Box */}
-          <div className="p-3 rounded-xl bg-[#101013] border border-[#10B981]/30 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#10B981]" />
+          {/* Live Profit Preview */}
+          {(formSellingPrice !== '' || formHpp !== '') && (
+            <div className="p-3 rounded-lg bg-[#1C1C20] border border-[#242428] flex items-center justify-between text-xs">
               <div>
-                <p className="text-[11px] text-[#7A7A84]">Perhitungan Otomatis:</p>
-                <p className="text-xs font-semibold text-[#F0F0F2]">
-                  Profit: <span className="text-[#10B981]">+{formatRupiah(liveCalc.profit)}</span>
-                </p>
+                <span className="text-[#8A8A91]">Estimasi Laba Kotor: </span>
+                <span className="font-semibold text-[#22C55E] tabular-nums">
+                  +{formatRupiah(liveCalc.profit)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[#8A8A91]">Margin: </span>
+                <span className="font-semibold text-[#22C55E] tabular-nums">
+                  {liveCalc.margin}%
+                </span>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-[11px] text-[#7A7A84]">Margin Laba:</p>
-              <p className="text-xs font-bold text-[#10B981]">{liveCalc.margin}%</p>
-            </div>
-          </div>
+          )}
 
-          {/* Stock & Minimum Stock */}
+          {/* Stock and Min Stock */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Stok Saat Ini
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Stok Awal
               </label>
               <input
                 type="number"
                 min="0"
                 value={formStock}
                 onChange={e => setFormStock(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
                 Batas Minimum Stok
               </label>
               <input
@@ -511,32 +519,32 @@ export function ProductsPage() {
                 min="0"
                 value={formMinStock}
                 onChange={e => setFormMinStock(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#22222A] flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-[#242428] flex items-center justify-end gap-2">
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 text-xs font-medium text-[#7A7A84] hover:text-[#F0F0F2] bg-[#16161B] rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-xs font-medium text-[#8A8A91] hover:text-[#F5F5F5] bg-[#141416] border border-[#242428] rounded-lg transition-colors disabled:opacity-50"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-black bg-[#10B981] hover:bg-[#059669] rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0B0B0C]" />
                   <span>Menyimpan...</span>
                 </>
               ) : (
-                <span>{editingProduct ? 'Simpan Perubahan' : 'Tambah Produk'}</span>
+                <span>{editingProduct ? 'Simpan Perubahan' : 'Simpan Produk'}</span>
               )}
             </button>
           </div>
@@ -548,19 +556,19 @@ export function ProductsPage() {
         isOpen={!!deletingProduct}
         onClose={() => !isDeleting && setDeletingProduct(null)}
         title="Hapus Produk"
-        subtitle="Konfirmasi penghapusan produk dari Supabase"
+        subtitle="Konfirmasi penghapusan menu dari database"
         maxWidth="sm"
       >
         <div className="space-y-4">
-          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
-            Apakah Anda yakin ingin menghapus produk <strong>"{deletingProduct?.name}"</strong>? Data produk ini akan dihapus secara permanen dari Supabase.
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-300">
+            Apakah Anda yakin ingin menghapus produk <strong>&quot;{deletingProduct?.name}&quot;</strong>? Riwayat transaksi lama tetap tersimpan.
           </div>
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#22222A]">
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#242428]">
             <button
               type="button"
               disabled={isDeleting}
               onClick={() => setDeletingProduct(null)}
-              className="px-4 py-2 text-xs font-medium text-[#7A7A84] hover:text-[#F0F0F2] bg-[#16161B] rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-xs font-medium text-[#8A8A91] hover:text-[#F5F5F5] bg-[#141416] border border-[#242428] rounded-lg transition-colors disabled:opacity-50"
             >
               Batal
             </button>
@@ -568,7 +576,7 @@ export function ProductsPage() {
               type="button"
               disabled={isDeleting}
               onClick={handleDeleteConfirm}
-              className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5"
             >
               {isDeleting ? (
                 <>
@@ -576,10 +584,7 @@ export function ProductsPage() {
                   <span>Menghapus...</span>
                 </>
               ) : (
-                <>
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Hapus Produk</span>
-                </>
+                <span>Hapus Produk</span>
               )}
             </button>
           </div>

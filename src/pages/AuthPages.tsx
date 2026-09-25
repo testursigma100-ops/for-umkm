@@ -33,7 +33,7 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
     setErrorMsg('');
     setInfoMsg('');
     if (!email || !password) {
-      setErrorMsg('Harap isi email dan kata sandi.');
+      setErrorMsg('Harap isi alamat email dan kata sandi.');
       return;
     }
 
@@ -44,7 +44,7 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
     if (res.success) {
       onSuccess();
     } else {
-      setErrorMsg(res.error || 'Gagal masuk. Periksa email dan kata sandi Anda.');
+      setErrorMsg(res.error || 'Gagal masuk. Periksa kembali email dan kata sandi Anda.');
     }
   };
 
@@ -53,7 +53,7 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
     setErrorMsg('');
     setInfoMsg('');
     if (!email || !password || !name || !businessName) {
-      setErrorMsg('Harap lengkapi seluruh kolom pendaftaran.');
+      setErrorMsg('Harap lengkapi seluruh kolom pendaftaran usaha.');
       return;
     }
     if (password.length < 6) {
@@ -73,7 +73,7 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
         onSuccess();
       }
     } else {
-      setErrorMsg(res.error || 'Gagal mendaftar akun.');
+      setErrorMsg(res.error || 'Gagal mendaftar akun usaha.');
     }
   };
 
@@ -93,63 +93,102 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
     if (res.success) {
       setForgotSent(true);
     } else {
-      setErrorMsg(res.error || 'Gagal mengirim email reset kata sandi.');
+      setErrorMsg(res.error || 'Gagal mengirim email pemulihan kata sandi.');
     }
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-[#101013] border border-[#22222A] rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
-        {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-xl bg-[#16161B] border border-[#22222A] text-[#10B981] flex items-center justify-center mx-auto mb-3">
-            <Sparkles className="w-6 h-6" />
+    <div className="w-full max-w-md mx-auto py-6 sm:py-10">
+      <div className="bg-[#141416] border border-[#242428] rounded-2xl p-6 sm:p-7 shadow-lg space-y-5">
+        {/* Brand Header */}
+        <div className="text-center space-y-1.5">
+          <div className="w-10 h-10 rounded-xl bg-[#1C1C20] border border-[#242428] text-[#22C55E] flex items-center justify-center mx-auto mb-2.5">
+            <Sparkles className="w-5 h-5" />
           </div>
-          <h2 className="text-xl font-bold tracking-tight text-[#F0F0F2]">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[#F5F5F5]">
             {mode === 'login' && 'Masuk ke BisnisKu AI'}
-            {mode === 'register' && 'Daftar Akun UMKM Baru'}
-            {mode === 'forgot' && 'Reset Kata Sandi'}
+            {mode === 'register' && 'Daftar Akun Usaha'}
+            {mode === 'forgot' && 'Pemulihan Kata Sandi'}
           </h2>
-          <p className="text-xs text-[#7A7A84]">
-            "Jualan jalan, bisnis makin jelas."
+          <p className="text-xs text-[#8A8A91]">
+            {mode === 'login' && 'Kelola penjualan, kasir, dan laporan keuangan kedai.'}
+            {mode === 'register' && 'Mulai kelola kasir dan keuangan UMKM secara otomatis.'}
+            {mode === 'forgot' && 'Masukkan email terdaftar untuk reset kata sandi.'}
           </p>
         </div>
 
+        {/* Mode Selector Tabs (Masuk vs Daftar) */}
+        {mode !== 'forgot' && (
+          <div className="grid grid-cols-2 p-1 bg-[#0B0B0C] border border-[#242428] rounded-lg text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg('');
+                setInfoMsg('');
+                setMode('login');
+              }}
+              className={`py-1.5 rounded-md transition-all ${
+                mode === 'login'
+                  ? 'bg-[#141416] text-[#F5F5F5] font-semibold'
+                  : 'text-[#8A8A91] hover:text-[#F5F5F5]'
+              }`}
+            >
+              Masuk
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMsg('');
+                setInfoMsg('');
+                setMode('register');
+              }}
+              className={`py-1.5 rounded-md transition-all ${
+                mode === 'register'
+                  ? 'bg-[#141416] text-[#F5F5F5] font-semibold'
+                  : 'text-[#8A8A91] hover:text-[#F5F5F5]'
+              }`}
+            >
+              Daftar Baru
+            </button>
+          </div>
+        )}
+
+        {/* Notifications */}
         {errorMsg && (
-          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs">
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
             {errorMsg}
           </div>
         )}
 
         {infoMsg && (
-          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">
+          <div className="p-3 rounded-lg bg-[#22C55E]/10 border border-[#22C55E]/20 text-[#22C55E] text-xs">
             {infoMsg}
           </div>
         )}
 
         {/* LOGIN FORM */}
         {mode === 'login' && (
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <form onSubmit={handleLoginSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Alamat Email
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
-                  placeholder="budi@kedai.com"
+                  placeholder="nama@kedai.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-[#7A7A84]">
+                <label className="text-xs font-medium text-[#8A8A91]">
                   Kata Sandi
                 </label>
                 <button
@@ -158,20 +197,20 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
                     setErrorMsg('');
                     setMode('forgot');
                   }}
-                  className="text-[11px] text-[#10B981] hover:underline"
+                  className="text-[11px] text-[#8A8A91] hover:text-[#F5F5F5]"
                 >
                   Lupa sandi?
                 </button>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
             </div>
@@ -179,95 +218,81 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 text-xs font-bold text-black bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 rounded-lg transition-colors shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] disabled:opacity-50 rounded-lg transition-colors flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
             >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{isLoading ? 'Memproses...' : 'Masuk Sekarang'}</span>
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-[#0B0B0C]" />}
+              <span>{isLoading ? 'Memproses...' : 'Masuk ke Aplikasi'}</span>
             </button>
-
-            <div className="text-center pt-2 text-xs text-[#7A7A84]">
-              Belum punya akun?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setErrorMsg('');
-                  setMode('register');
-                }}
-                className="text-[#10B981] font-semibold hover:underline"
-              >
-                Daftar Usaha Baru
-              </button>
-            </div>
           </form>
         )}
 
         {/* REGISTER FORM */}
         {mode === 'register' && (
-          <form onSubmit={handleRegisterSubmit} className="space-y-4">
+          <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Nama Lengkap Pemilik
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Nama Lengkap
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
                   placeholder="Contoh: Budi Santoso"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Nama Usaha / Kedai F&B
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Nama Usaha / Kedai
               </label>
               <div className="relative">
-                <Store className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Store className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   required
                   placeholder="Contoh: Kopi & Roti Nusantara"
                   value={businessName}
                   onChange={e => setBusinessName(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                Alamat Email
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
                   required
                   placeholder="owner@kedai.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-[#7A7A84] mb-1">
+              <label className="block text-xs font-medium text-[#8A8A91] mb-1">
                 Kata Sandi
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="password"
                   required
                   placeholder="Minimal 6 karakter"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                 />
               </div>
             </div>
@@ -275,25 +300,11 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-2.5 px-4 text-xs font-bold text-black bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 rounded-lg transition-colors shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] disabled:opacity-50 rounded-lg transition-colors flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
             >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>{isLoading ? 'Mendaftarkan...' : 'Daftar & Hubungkan Usaha'}</span>
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-[#0B0B0C]" />}
+              <span>{isLoading ? 'Mendaftarkan...' : 'Daftar Akun Usaha'}</span>
             </button>
-
-            <div className="text-center pt-2 text-xs text-[#7A7A84]">
-              Sudah punya akun?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setErrorMsg('');
-                  setMode('login');
-                }}
-                className="text-[#10B981] font-semibold hover:underline"
-              >
-                Masuk di sini
-              </button>
-            </div>
           </form>
         )}
 
@@ -301,14 +312,14 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
         {mode === 'forgot' && (
           <div className="space-y-4">
             {forgotSent ? (
-              <div className="text-center space-y-3 py-4">
-                <CheckCircle className="w-10 h-10 text-[#10B981] mx-auto" />
-                <h3 className="text-sm font-semibold text-[#F0F0F2]">
-                  Instruksi Terkirim
+              <div className="text-center space-y-3 py-3">
+                <CheckCircle className="w-9 h-9 text-[#22C55E] mx-auto" />
+                <h3 className="text-sm font-semibold text-[#F5F5F5]">
+                  Tautan Telah Dikirim
                 </h3>
-                <p className="text-xs text-[#7A7A84]">
+                <p className="text-xs text-[#8A8A91]">
                   Tautan pemulihan kata sandi telah dikirim ke{' '}
-                  <span className="text-[#F0F0F2] font-semibold">{email}</span>. Silakan periksa kotak masuk atau folder spam Anda.
+                  <span className="text-[#F5F5F5] font-semibold">{email}</span>. Silakan periksa kotak masuk atau spam email Anda.
                 </p>
                 <button
                   type="button"
@@ -316,30 +327,26 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
                     setForgotSent(false);
                     setMode('login');
                   }}
-                  className="mt-4 px-4 py-2 text-xs font-semibold text-black bg-[#10B981] rounded-lg"
+                  className="mt-2 px-4 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] rounded-lg"
                 >
-                  Kembali ke Login
+                  Kembali ke Halaman Masuk
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleForgotSubmit} className="space-y-4">
-                <p className="text-xs text-[#7A7A84]">
-                  Masukkan email terdaftar untuk menerima tautan pemulihan kata sandi.
-                </p>
-
+              <form onSubmit={handleForgotSubmit} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-medium text-[#7A7A84] mb-1">
-                    Alamat Email
+                  <label className="block text-xs font-medium text-[#8A8A91] mb-1">
+                    Alamat Email Terdaftar
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-[#7A7A84] absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-[#8A8A91] absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="email"
                       required
-                      placeholder="owner@kedai.com"
+                      placeholder="nama@kedai.com"
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-xs bg-[#16161B] border border-[#22222A] rounded-lg text-[#F0F0F2] placeholder-[#7A7A84] focus:outline-hidden focus:border-[#10B981]"
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
                     />
                   </div>
                 </div>
@@ -347,23 +354,23 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full py-2.5 px-4 text-xs font-bold text-black bg-[#10B981] hover:bg-[#059669] disabled:opacity-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] disabled:opacity-50 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <span>{isLoading ? 'Mengirim...' : 'Kirim Tautan Pemulihan'}</span>
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin text-[#0B0B0C]" />}
+                  <span>{isLoading ? 'Mengirim...' : 'Kirim Tautan Reset'}</span>
                 </button>
 
-                <div className="text-center pt-2">
+                <div className="text-center pt-1">
                   <button
                     type="button"
                     onClick={() => {
                       setErrorMsg('');
                       setMode('login');
                     }}
-                    className="text-xs text-[#7A7A84] hover:text-[#F0F0F2] flex items-center justify-center gap-1 mx-auto"
+                    className="text-xs text-[#8A8A91] hover:text-[#F5F5F5] flex items-center justify-center gap-1 mx-auto"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Kembali ke Halaman Masuk</span>
+                    <span>Kembali ke Masuk</span>
                   </button>
                 </div>
               </form>
