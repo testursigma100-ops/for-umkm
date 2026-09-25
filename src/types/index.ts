@@ -12,6 +12,8 @@ export interface Business {
   email?: string;
   business_type?: string;
   address?: string;
+  instagram?: string;
+  logo_url?: string;
   receipt_footer?: string;
   created_at?: string;
   updated_at?: string;
