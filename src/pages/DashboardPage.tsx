@@ -57,7 +57,7 @@ export function DashboardPage({ onNavigate, onOpenQuickTx }: DashboardPageProps)
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#F5F5F5] bg-[#141416] border border-[#242428] hover:bg-[#1C1C20] rounded-lg transition-colors active:scale-[0.98]"
           >
             <BotMessageSquare className="w-3.5 h-3.5 text-[#22C55E]" />
-            <span>Tanya Copilot AI</span>
+            <span>Tanya Asisten</span>
           </button>
           <button
             type="button"

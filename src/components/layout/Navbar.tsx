@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useBusiness } from '../../context/BusinessContext';
 import { NavTab } from './BottomNav';
+import { Logo } from '../common/Logo';
 import {
-  Sparkles,
   Plus,
   ArrowDownCircle,
   Settings as SettingsIcon,
@@ -34,8 +34,8 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-30 bg-[#0B0B0C]/95 backdrop-blur-md border-b border-[#242428] px-4 lg:px-8 py-2.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        {/* Brand Zone */}
-        <div className="flex items-center gap-3">
+        {/* Brand: [Logo] BisnisKu */}
+        <div className="flex items-center">
           <button
             type="button"
             onClick={() => {
@@ -45,30 +45,15 @@ export function Navbar({
                 onOpenAuthModal();
               }
             }}
-            className="flex items-center gap-2.5 text-left focus:outline-hidden"
+            className="flex items-center gap-2 text-left focus:outline-hidden group select-none"
+            aria-label="BisnisKu"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#141416] border border-[#242428] flex items-center justify-center text-[#22C55E] shrink-0">
-              <Sparkles className="w-4 h-4" />
+            <div className="text-[#22C55E] flex items-center justify-center">
+              <Logo size={26} />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-bold tracking-tight text-[#F5F5F5]">
-                  BisnisKu
-                </span>
-                <span className="text-[10px] font-semibold text-[#22C55E] bg-[#22C55E]/10 px-1.5 py-0.5 rounded">
-                  AI
-                </span>
-              </div>
-              {user.isAuthenticated && profile.business_name ? (
-                <p className="text-[11px] text-[#8A8A91] hidden sm:block truncate max-w-[200px]">
-                  {profile.business_name}
-                </p>
-              ) : (
-                <p className="text-[11px] text-[#8A8A91] hidden sm:block">
-                  Jualan jalan, bisnis makin jelas.
-                </p>
-              )}
-            </div>
+            <span className="text-base font-semibold tracking-tight text-[#F5F5F5]">
+              BisnisKu
+            </span>
           </button>
         </div>
 
@@ -81,7 +66,7 @@ export function Navbar({
                 <button
                   type="button"
                   onClick={onOpenQuickExpenseModal}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#F5F5F5] bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] rounded-lg transition-colors"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#F5F5F5] bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] rounded-lg transition-colors select-none"
                   title="Catat Pengeluaran"
                 >
                   <ArrowDownCircle className="w-3.5 h-3.5 text-[#8A8A91]" />
@@ -94,7 +79,7 @@ export function Navbar({
                 <button
                   type="button"
                   onClick={onOpenQuickTxModal}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98]"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98] select-none"
                   title="Buka Kasir / Catat Penjualan"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -107,7 +92,7 @@ export function Navbar({
                 <button
                   type="button"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1.5 p-1.5 text-xs text-[#F5F5F5] bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 p-1.5 text-xs text-[#F5F5F5] bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] rounded-lg transition-colors select-none"
                   aria-label="Menu Pengguna"
                 >
                   <div className="w-6 h-6 rounded-full bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0">
@@ -163,13 +148,14 @@ export function Navbar({
                       <div className="py-1">
                         <button
                           type="button"
-                          onClick={() => {
-                            logout();
+                          onClick={async () => {
                             setUserMenuOpen(false);
+                            await logout();
+                            if (onOpenAuthModal) onOpenAuthModal();
                           }}
                           className="w-full text-left px-3.5 py-2 text-xs text-red-400 hover:bg-[#1C1C20] flex items-center gap-2.5 transition-colors"
                         >
-                          <LogOut className="w-3.5 h-3.5 text-red-400" />
+                          <LogOut className="w-3.5 h-3.5" />
                           <span>Keluar Akun</span>
                         </button>
                       </div>
@@ -179,13 +165,12 @@ export function Navbar({
               </div>
             </>
           ) : (
-            /* Guest Actions */
             <button
               type="button"
               onClick={onOpenAuthModal}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98]"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98] select-none"
             >
-              <LogIn className="w-3.5 h-3.5" />
+              <LogIn className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Masuk / Daftar</span>
             </button>
           )}

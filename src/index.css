@@ -18,18 +18,23 @@
   }
 
   /* Prevent unintended link-like cursor or pointer behavior on generic texts */
-  h1, h2, h3, h4, h5, h6, p, span, label, td, th {
+  h1, h2, h3, h4, h5, h6, label, th {
     cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  button, a, input, select, textarea, [role="button"], [role="tab"] {
+  nav, button, [role="button"], [role="tab"] {
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
-  input, textarea {
+  /* Explicitly allow selection on inputs, textareas, and editable text */
+  input, textarea, [contenteditable="true"], .allow-select, .selectable-content {
     cursor: text;
-    user-select: text;
-    -webkit-user-select: text;
+    user-select: text !important;
+    -webkit-user-select: text !important;
   }
 }
 

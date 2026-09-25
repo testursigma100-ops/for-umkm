@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBusiness } from '../context/BusinessContext';
-import { Sparkles, ArrowLeft, Mail, Lock, User, Store, CheckCircle, Loader2 } from 'lucide-react';
+import { Logo } from '../components/common/Logo';
+import { ArrowLeft, Mail, Lock, User, Store, CheckCircle, Loader2 } from 'lucide-react';
 
 interface AuthPagesProps {
   onSuccess: () => void;
@@ -101,18 +102,18 @@ export function AuthPages({ onSuccess, initialMode = 'login' }: AuthPagesProps) 
     <div className="w-full max-w-md mx-auto py-6 sm:py-10">
       <div className="bg-[#141416] border border-[#242428] rounded-2xl p-6 sm:p-7 shadow-lg space-y-5">
         {/* Brand Header */}
-        <div className="text-center space-y-1.5">
-          <div className="w-10 h-10 rounded-xl bg-[#1C1C20] border border-[#242428] text-[#22C55E] flex items-center justify-center mx-auto mb-2.5">
-            <Sparkles className="w-5 h-5" />
+        <div className="text-center space-y-2">
+          <div className="text-[#22C55E] flex items-center justify-center mx-auto mb-1">
+            <Logo size={40} />
           </div>
           <h2 className="text-lg sm:text-xl font-bold tracking-tight text-[#F5F5F5]">
-            {mode === 'login' && 'Masuk ke BisnisKu AI'}
-            {mode === 'register' && 'Daftar Akun Usaha'}
+            {mode === 'login' && 'Masuk ke BisnisKu'}
+            {mode === 'register' && 'Daftar Akun BisnisKu'}
             {mode === 'forgot' && 'Pemulihan Kata Sandi'}
           </h2>
           <p className="text-xs text-[#8A8A91]">
-            {mode === 'login' && 'Kelola penjualan, kasir, dan laporan keuangan kedai.'}
-            {mode === 'register' && 'Mulai kelola kasir dan keuangan UMKM secara otomatis.'}
+            {mode === 'login' && 'Kelola penjualan, kasir, dan laporan keuangan toko.'}
+            {mode === 'register' && 'Mulai kelola kasir dan keuangan usaha dengan mudah.'}
             {mode === 'forgot' && 'Masukkan email terdaftar untuk reset kata sandi.'}
           </p>
         </div>

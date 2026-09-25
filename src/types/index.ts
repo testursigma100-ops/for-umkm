@@ -28,6 +28,8 @@ export interface Product {
   stock: number;
   unit: string; // cup, porsi, pcs, botol, pack, dll.
   min_stock: number;
+  image_url?: string;
+  image?: string;
   created_at?: string;
   updated_at?: string;
 }

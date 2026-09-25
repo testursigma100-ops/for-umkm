@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBusiness } from '../context/BusinessContext';
 import { getSupabaseConfig, saveSupabaseConfig, testSupabaseConnection } from '../lib/supabase';
+import { Logo } from '../components/common/Logo';
 import {
   Store,
   Database,
@@ -17,6 +18,7 @@ import {
   XCircle,
   RefreshCw,
   UserCheck,
+  Info,
 } from 'lucide-react';
 
 export function SettingsPage() {
@@ -49,7 +51,7 @@ export function SettingsPage() {
   const [isCopiedSql, setIsCopiedSql] = useState(false);
 
   // Active sub-tab
-  const [activeTab, setActiveTab] = useState<'profile' | 'supabase' | 'backup'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'supabase' | 'backup' | 'about'>('profile');
   const [toastMsg, setToastMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -301,6 +303,19 @@ CREATE POLICY "Allow authenticated users access to expenses" ON public.expenses 
         >
           <Download className="w-3.5 h-3.5 text-[#22C55E]" />
           <span>Cadangan & Reset</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('about')}
+          className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+            activeTab === 'about'
+              ? 'bg-[#141416] text-[#F5F5F5] border border-[#242428]'
+              : 'text-[#8A8A91] hover:text-[#F5F5F5]'
+          }`}
+        >
+          <Info className="w-3.5 h-3.5 text-[#22C55E]" />
+          <span>Tentang BisnisKu</span>
         </button>
       </div>
 
@@ -584,6 +599,33 @@ CREATE POLICY "Allow authenticated users access to expenses" ON public.expenses 
               <Trash2 className="w-3.5 h-3.5" />
               <span>Hapus Seluruh Data</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* About BisnisKu Tab */}
+      {activeTab === 'about' && (
+        <div className="max-w-2xl space-y-4">
+          <div className="p-6 rounded-xl bg-[#141416] border border-[#242428] text-center space-y-4">
+            <div className="text-[#22C55E] flex items-center justify-center mx-auto">
+              <Logo size={56} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#F5F5F5]">
+                BisnisKu
+              </h3>
+              <p className="text-xs text-[#8A8A91] mt-0.5">
+                Versi 1.0 · Aplikasi Pengelolaan Usaha & Kasir UMKM
+              </p>
+            </div>
+            <p className="text-xs text-[#8A8A91] max-w-md mx-auto leading-relaxed">
+              Dirancang untuk membantu pelaku usaha dan UMKM mencatat transaksi kasir, mengelola katalog produk & modal HPP, memantau pengeluaran, serta memahami perkembangan bisnis dengan asisten pintar.
+            </p>
+            <div className="pt-3 border-t border-[#242428] flex items-center justify-center gap-6 text-xs text-[#8A8A91]">
+              <span>Status: <strong className="text-[#22C55E] font-medium">Aktif</strong></span>
+              <span>•</span>
+              <span>Platform: <strong className="text-[#F5F5F5] font-medium">Web & Mobile PWA</strong></span>
+            </div>
           </div>
         </div>
       )}

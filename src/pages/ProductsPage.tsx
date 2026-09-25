@@ -1,7 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useBusiness } from '../context/BusinessContext';
 import { Product } from '../types';
 import { formatRupiah, formatNumber, calculateProfit } from '../utils/formatters';
+import { processProductImage } from '../utils/imageStorage';
 import { Modal } from '../components/common/Modal';
 import {
   Plus,
@@ -12,10 +13,13 @@ import {
   Package,
   CheckCircle,
   Loader2,
+  Image as ImageIcon,
+  Camera,
+  X,
 } from 'lucide-react';
 
 export function ProductsPage() {
-  const { products, addProduct, updateProduct, deleteProduct, adjustStock, isLoadingData } = useBusiness();
+  const { products, addProduct, updateProduct, deleteProduct, adjustStock, isLoadingData, business, user } = useBusiness();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -49,6 +53,10 @@ export function ProductsPage() {
   const [formStock, setFormStock] = useState<number | ''>(10);
   const [formUnit, setFormUnit] = useState('porsi');
   const [formMinStock, setFormMinStock] = useState<number | ''>(5);
+  const [formImage, setFormImage] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Categories list derived dynamically from real products
   const categories = useMemo(() => {
@@ -85,6 +93,7 @@ export function ProductsPage() {
     setFormStock(20);
     setFormUnit('cup');
     setFormMinStock(5);
+    setFormImage('');
     setIsModalOpen(true);
   };
 
@@ -98,7 +107,24 @@ export function ProductsPage() {
     setFormStock(p.stock);
     setFormUnit(p.unit);
     setFormMinStock(p.min_stock);
+    setFormImage(p.image_url || p.image || '');
     setIsModalOpen(true);
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const processedUrl = await processProductImage(file, business?.id, user?.id);
+      setFormImage(processedUrl);
+    } catch {
+      setFormError('Gagal memproses foto. Silakan coba gambar lain.');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,6 +144,8 @@ export function ProductsPage() {
       stock: Number(formStock) || 0,
       unit: formUnit.trim() || 'porsi',
       min_stock: Number(formMinStock) || 0,
+      image_url: formImage || undefined,
+      image: formImage || undefined,
     };
 
     setIsSubmitting(true);
@@ -142,7 +170,7 @@ export function ProductsPage() {
     setIsDeleting(true);
     try {
       await deleteProduct(deletingProduct.id);
-      setToast({ message: `Produk "${deletingProduct.name}" berhasil dihapus`, type: 'success' });
+      setToast({ message: `Produk "${deletingProduct.name}" telah dihapus`, type: 'success' });
       setDeletingProduct(null);
     } catch (err: any) {
       setToast({ message: err?.message || 'Gagal menghapus produk', type: 'error' });
@@ -153,36 +181,34 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-5 pb-24 md:pb-8">
-      {/* Header */}
+      {/* Header & Quick Action */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
             Katalog Produk & Menu
           </h1>
           <p className="text-xs text-[#8A8A91] mt-0.5">
-            Kelola HPP, harga jual, stok, dan margin keuntungan tiap item.
+            Kelola harga jual, modal HPP, dan pantau stok bahan / porsi.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98]"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Tambah Produk</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={openAddModal}
+          className="flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98] select-none shrink-0"
+        >
+          <Plus className="w-4 h-4 stroke-[2.5]" />
+          <span>Tambah Produk</span>
+        </button>
       </div>
 
       {/* Toast Notification */}
       {toast && (
         <div
-          className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
+          className={`p-3 rounded-lg border text-xs flex items-center justify-between transition-all ${
             toast.type === 'success'
-              ? 'bg-[#22C55E]/10 border-[#22C55E]/20 text-[#22C55E]'
-              : 'bg-red-500/10 border-red-500/20 text-red-400'
+              ? 'bg-[#22C55E]/10 border-[#22C55E]/30 text-[#22C55E]'
+              : 'bg-red-500/10 border-red-500/30 text-red-400'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -196,7 +222,7 @@ export function ProductsPage() {
           <button
             type="button"
             onClick={() => setToast(null)}
-            className="text-[#8A8A91] hover:text-[#F5F5F5] text-sm leading-none px-1"
+            className="text-sm leading-none px-1"
             aria-label="Tutup notifikasi"
           >
             &times;
@@ -219,7 +245,7 @@ export function ProductsPage() {
         </div>
 
         {/* Category Segmented Tabs */}
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none select-none">
           {categories.map(cat => (
             <button
               key={cat}
@@ -273,7 +299,7 @@ export function ProductsPage() {
           <button
             type="button"
             onClick={openAddModal}
-            className="mt-4 px-4 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] rounded-lg hover:bg-[#16A34A] transition-colors"
+            className="mt-4 px-4 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] rounded-lg hover:bg-[#16A34A] transition-colors select-none"
           >
             Tambah Produk Sekarang
           </button>
@@ -284,6 +310,7 @@ export function ProductsPage() {
           {filteredProducts.map(product => {
             const { profit, margin } = calculateProfit(product.selling_price, product.hpp);
             const isLowStock = product.stock <= product.min_stock;
+            const productImage = product.image_url || product.image;
 
             return (
               <div
@@ -292,7 +319,7 @@ export function ProductsPage() {
               >
                 <div>
                   {/* Category & Status */}
-                  <div className="flex items-center justify-between text-[11px] text-[#8A8A91] mb-1.5 font-medium">
+                  <div className="flex items-center justify-between text-[11px] text-[#8A8A91] mb-2 font-medium">
                     <span>{product.category}</span>
                     {isLowStock ? (
                       <span className="text-amber-400 font-medium flex items-center gap-1">
@@ -304,10 +331,30 @@ export function ProductsPage() {
                     )}
                   </div>
 
-                  {/* Title */}
-                  <h3 className="text-sm font-semibold text-[#F5F5F5] tracking-tight">
-                    {product.name}
-                  </h3>
+                  {/* Header: Photo Thumbnail (if exists) + Title */}
+                  <div className="flex items-start gap-3">
+                    {productImage ? (
+                      <img
+                        src={productImage}
+                        alt={product.name}
+                        className="w-12 h-12 rounded-lg object-cover bg-[#1C1C20] border border-[#242428] shrink-0"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0">
+                        <Package className="w-5 h-5 opacity-60" />
+                      </div>
+                    )}
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-semibold text-[#F5F5F5] tracking-tight line-clamp-2 leading-snug">
+                        {product.name}
+                      </h3>
+                      <p className="text-[11px] text-[#8A8A91] mt-0.5 tabular-nums">
+                        {formatRupiah(product.selling_price)}
+                      </p>
+                    </div>
+                  </div>
 
                   {/* Price & Profit Specs */}
                   <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-[#1C1C20] border border-[#242428] text-xs">
@@ -331,7 +378,7 @@ export function ProductsPage() {
                 </div>
 
                 {/* Stock Controls & Actions */}
-                <div className="pt-2 border-t border-[#242428] flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-[#242428] flex items-center justify-between gap-2 select-none">
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
@@ -359,7 +406,7 @@ export function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => openEditModal(product)}
-                      className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#1C1C20] rounded-lg transition-colors"
+                      className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#1C1C20] rounded-md transition-colors"
                       title="Edit Produk"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -367,7 +414,7 @@ export function ProductsPage() {
                     <button
                       type="button"
                       onClick={() => setDeletingProduct(product)}
-                      className="p-1.5 text-[#8A8A91] hover:text-red-400 hover:bg-[#1C1C20] rounded-lg transition-colors"
+                      className="p-1.5 text-[#8A8A91] hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
                       title="Hapus Produk"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -380,22 +427,87 @@ export function ProductsPage() {
         </div>
       )}
 
-      {/* Add / Edit Product Modal */}
+      {/* Product Add/Edit Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => !isSubmitting && setIsModalOpen(false)}
-        title={editingProduct ? 'Edit Produk' : 'Tambah Produk / Menu Baru'}
-        subtitle="Hitung otomatis laba bersih dan margin keuntungan per item"
+        title={editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}
+        subtitle="Kelola harga jual, HPP modal, dan batas stok"
         maxWidth="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {formError && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{formError}</span>
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+              {formError}
             </div>
           )}
 
+          {/* Optional Product Photo Upload */}
+          <div className="p-3 rounded-xl bg-[#1C1C20] border border-[#242428] space-y-2">
+            <label className="block text-xs font-medium text-[#8A8A91]">
+              Foto Produk <span className="text-[10px] text-[#8A8A91] font-normal">(Opsional)</span>
+            </label>
+
+            <div className="flex items-center gap-3">
+              {formImage ? (
+                <div className="relative group">
+                  <img
+                    src={formImage}
+                    alt="Preview"
+                    className="w-16 h-16 rounded-lg object-cover border border-[#242428]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormImage('')}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center text-xs shadow-md transition-all"
+                    title="Hapus foto"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-[#141416] border border-dashed border-[#242428] flex items-center justify-center text-[#8A8A91]">
+                  <ImageIcon className="w-6 h-6 opacity-40" />
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="product-photo-upload"
+                />
+                <label
+                  htmlFor="product-photo-upload"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                    isUploadingImage
+                      ? 'bg-[#141416] text-[#8A8A91] border-[#242428] opacity-60 pointer-events-none'
+                      : 'bg-[#141416] text-[#F5F5F5] border-[#242428] hover:bg-[#242428]'
+                  }`}
+                >
+                  {isUploadingImage ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Memproses...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="w-3.5 h-3.5 text-[#22C55E]" />
+                      <span>{formImage ? 'Ganti Foto' : '+ Tambah Foto'}</span>
+                    </>
+                  )}
+                </label>
+                <p className="text-[10px] text-[#8A8A91]">
+                  Format JPG, PNG atau WebP (otomatis dioptimalkan).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Name */}
           <div>
             <label className="block text-xs font-medium text-[#8A8A91] mb-1">
               Nama Produk / Menu *
@@ -403,13 +515,14 @@ export function ProductsPage() {
             <input
               type="text"
               required
-              placeholder="Contoh: Es Kopi Susu Aren, Toast Cokelat"
+              placeholder="Contoh: Kopi Susu Gula Aren"
               value={formName}
               onChange={e => setFormName(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
+              className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
             />
           </div>
 
+          {/* Category & Unit */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-[#8A8A91] mb-1">
@@ -418,7 +531,7 @@ export function ProductsPage() {
               <select
                 value={formCategory}
                 onChange={e => setFormCategory(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] focus:outline-hidden focus:border-[#22C55E]"
+                className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] focus:outline-hidden focus:border-[#22C55E]"
               >
                 <option value="Minuman Kopi">Minuman Kopi</option>
                 <option value="Non-Kopi">Non-Kopi</option>
@@ -439,7 +552,7 @@ export function ProductsPage() {
                 placeholder="cup / porsi / pcs / botol"
                 value={formUnit}
                 onChange={e => setFormUnit(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
+                className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
           </div>
@@ -457,7 +570,7 @@ export function ProductsPage() {
                 placeholder="0"
                 value={formHpp}
                 onChange={e => setFormHpp(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
+                className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
 
@@ -472,7 +585,7 @@ export function ProductsPage() {
                 placeholder="0"
                 value={formSellingPrice}
                 onChange={e => setFormSellingPrice(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
+                className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
           </div>
@@ -506,7 +619,7 @@ export function ProductsPage() {
                 min="0"
                 value={formStock}
                 onChange={e => setFormStock(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
+                className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
 
@@ -519,7 +632,7 @@ export function ProductsPage() {
                 min="0"
                 value={formMinStock}
                 onChange={e => setFormMinStock(e.target.value === '' ? '' : Number(e.target.value))}
-                className="w-full px-3 py-2 text-xs bg-[#1A1A1E] border border-[#242428] rounded-lg text-[#F5F5F5] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
+                className="w-full px-3 py-2 text-xs bg-[#1C1C20] border border-[#242428] rounded-lg text-[#F5F5F5] tabular-nums focus:outline-hidden focus:border-[#22C55E]"
               />
             </div>
           </div>

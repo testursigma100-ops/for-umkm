@@ -2,15 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useBusiness } from '../context/BusinessContext';
 import { ChatMessage } from '../types';
 import { supabase, getSupabaseConfig } from '../lib/supabase';
-import { formatRupiah } from '../utils/formatters';
 import {
   Send,
   BotMessageSquare,
   User,
-  Sparkles,
   RefreshCw,
   Lightbulb,
   AlertCircle,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface MarkdownContentProps {
@@ -218,7 +218,7 @@ export function ChatPage() {
     {
       id: 'msg-welcome',
       role: 'assistant',
-      content: `Halo! Saya asisten bisnis pintar untuk **${profile.business_name || 'Kedai Anda'}**.\n\nSaya telah terhubung langsung dengan data katalog produk, riwayat penjualan, dan pengeluaran Anda. Anda bisa menanyakan analisis performa, saran strategi harga, atau rekapitulasi laba secara akurat.`,
+      content: `Halo! Saya Asisten untuk **${profile.business_name || 'usaha Anda'}**.\n\nSaya telah terhubung langsung dengan data produk, penjualan, dan pengeluaran toko Anda. Mau tahu analisis performa atau perkembangan apa hari ini?`,
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -226,6 +226,7 @@ export function ChatPage() {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -235,11 +236,17 @@ export function ChatPage() {
   }, [messages, isLoading]);
 
   const samplePrompts = [
-    'Berapa estimasi laba bersih kedai hari ini?',
-    'Menu apa yang paling laris dan menyumbang laba terbesar?',
-    'Bagaimana struktur pengeluaran biaya operasional saya?',
-    'Berikan rekomendasi praktis untuk menaikkan margin penjualan.',
+    'Berapa omzet saya hari ini?',
+    'Produk mana yang paling laku?',
+    'Berapa laba saya bulan ini?',
+    'Gimana kondisi bisnis saya?',
   ];
+
+  const handleCopyMessage = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   const handleSendMessage = async (customPrompt?: string) => {
     const query = customPrompt || inputMessage;
@@ -428,7 +435,7 @@ export function ChatPage() {
                 ? {
                     ...m,
                     content:
-                      'Maaf, tidak menerima respons teks dari AI. Mohon coba ulangi pertanyaan Anda.',
+                      'Maaf, tidak menerima respons dari Asisten. Mohon coba ulangi pertanyaan Anda.',
                   }
                 : m
             )
@@ -447,14 +454,14 @@ export function ChatPage() {
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       console.error('Chat error:', err);
-      setChatError(err.message || 'Gagal menghubungi asisten AI.');
+      setChatError(err.message || 'Gagal menghubungi Asisten.');
       setMessages(prev =>
         prev.map(m =>
           m.id === assistantMsgId
             ? {
                 ...m,
                 content:
-                  'Terjadi gangguan saat memproses jawaban AI. Pastikan koneksi internet stabil dan coba kembali.',
+                  'Terjadi gangguan saat memproses jawaban Asisten. Pastikan koneksi internet stabil dan coba kembali.',
               }
             : m
         )
@@ -474,16 +481,11 @@ export function ChatPage() {
             <BotMessageSquare className="w-4 h-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-base font-bold text-[#F5F5F5]">
-                Tanya Bisnis AI
-              </h1>
-              <span className="text-[10px] font-medium text-[#22C55E] bg-[#22C55E]/10 px-1.5 py-0.2 rounded">
-                Data Riil
-              </span>
-            </div>
+            <h1 className="text-sm sm:text-base font-bold text-[#F5F5F5]">
+              Asisten
+            </h1>
             <p className="text-xs text-[#8A8A91]">
-              Terkoneksi langsung dengan data {profile.business_name || 'usaha Anda'}
+              Bantu kamu memahami dan mengelola bisnis.
             </p>
           </div>
         </div>
@@ -495,13 +497,13 @@ export function ChatPage() {
               {
                 id: 'msg-welcome-new',
                 role: 'assistant',
-                content: `Chat dibersihkan! Mau tanya apa sekarang seputar data penjualan atau operasional **${profile.business_name || 'usaha Anda'}**?`,
+                content: `Percakapan dibersihkan! Mau tanya apa sekarang seputar data **${profile.business_name || 'usaha Anda'}**?`,
                 timestamp: new Date().toISOString(),
               },
             ]);
             setChatError(null);
           }}
-          className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#141416] rounded-lg transition-colors text-xs flex items-center gap-1"
+          className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#141416] rounded-lg transition-colors text-xs flex items-center gap-1 select-none"
           title="Bersihkan Percakapan"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -513,6 +515,7 @@ export function ChatPage() {
       <div className="flex-1 overflow-y-auto py-4 space-y-3.5 pr-1">
         {messages.map(msg => {
           const isUser = msg.role === 'user';
+          const isCopied = copiedId === msg.id;
 
           if (!isUser && !msg.content && isLoading) {
             return null;
@@ -534,15 +537,41 @@ export function ChatPage() {
                 {isUser ? <User className="w-3.5 h-3.5" /> : <BotMessageSquare className="w-3.5 h-3.5" />}
               </div>
 
-              {/* Message bubble: User is lighter surface (#1C1C20), AI is dark card (#141416) */}
+              {/* Message bubble: User is lighter surface (#1C1C20), Assistant is dark card (#141416) */}
               <div
-                className={`max-w-[88%] sm:max-w-[75%] rounded-xl px-4 py-3 text-xs leading-relaxed ${
+                className={`max-w-[88%] sm:max-w-[75%] rounded-xl px-4 py-3 text-xs leading-relaxed relative group ${
                   isUser
                     ? 'bg-[#1C1C20] border border-[#242428] text-[#F5F5F5]'
                     : 'bg-[#141416] border border-[#242428] text-[#F5F5F5]'
                 }`}
               >
-                <MarkdownContent content={msg.content} isUser={isUser} />
+                <div className="allow-select">
+                  <MarkdownContent content={msg.content} isUser={isUser} />
+                </div>
+
+                {/* Salin / Copy button for assistant responses */}
+                {!isUser && msg.content && (
+                  <div className="pt-2 mt-2 border-t border-[#242428]/60 flex items-center justify-end select-none">
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMessage(msg.id, msg.content)}
+                      className="flex items-center gap-1 text-[11px] font-medium text-[#8A8A91] hover:text-[#22C55E] transition-colors py-0.5 px-1.5 rounded hover:bg-[#1C1C20]"
+                      title="Salin jawaban Asisten"
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-3 h-3 text-[#22C55E]" />
+                          <span className="text-[#22C55E]">Tersalin</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Salin</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -556,7 +585,7 @@ export function ChatPage() {
             </div>
             <div className="bg-[#141416] border border-[#242428] rounded-xl px-4 py-3 text-xs text-[#8A8A91] flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-ping" />
-              <span>Copilot sedang menganalisis data riil bisnismu...</span>
+              <span>Asisten sedang menganalisis data bisnismu...</span>
             </div>
           </div>
         )}
@@ -573,7 +602,7 @@ export function ChatPage() {
       </div>
 
       {/* Suggested Prompts pills */}
-      <div className="pt-2 pb-1.5 shrink-0">
+      <div className="pt-2 pb-1.5 shrink-0 select-none">
         <p className="text-[10px] text-[#8A8A91] mb-1.5 flex items-center gap-1">
           <Lightbulb className="w-3 h-3 text-[#22C55E]" />
           <span>Pertanyaan Rekomendasi:</span>
@@ -612,7 +641,7 @@ export function ChatPage() {
         <button
           type="submit"
           disabled={isLoading || !inputMessage.trim()}
-          className="px-4 py-2.5 bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0"
+          className="px-4 py-2.5 bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0 select-none"
         >
           <Send className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Kirim</span>

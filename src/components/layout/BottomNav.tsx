@@ -3,8 +3,8 @@ import {
   LayoutDashboard,
   Package,
   Receipt,
-  BarChart3,
   BotMessageSquare,
+  BarChart3,
 } from 'lucide-react';
 
 export type NavTab = 'dashboard' | 'products' | 'transactions' | 'reports' | 'chat' | 'expenses' | 'settings';
@@ -18,14 +18,14 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const tabs = [
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'products' as NavTab, label: 'Produk', icon: Package },
-    { id: 'transactions' as NavTab, label: 'Kasir', icon: Receipt },
+    { id: 'transactions' as NavTab, label: 'Transaksi', icon: Receipt },
+    { id: 'chat' as NavTab, label: 'Asisten', icon: BotMessageSquare },
     { id: 'reports' as NavTab, label: 'Laporan', icon: BarChart3 },
-    { id: 'chat' as NavTab, label: 'Tanya AI', icon: BotMessageSquare },
   ];
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B0B0C]/95 backdrop-blur-lg border-t border-[#242428] px-2 pt-1.5 pb-safe"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B0B0C]/95 backdrop-blur-lg border-t border-[#242428] px-2 pt-1.5 pb-safe select-none"
       aria-label="Navigasi Utama Bawah"
     >
       <div className="flex items-center justify-around">

@@ -25,19 +25,19 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
     {
       id: 'products' as NavTab,
-      label: 'Produk & Menu',
+      label: 'Produk',
       icon: Package,
       badge: dashboardSummary.lowStockProducts.length > 0 ? dashboardSummary.lowStockProducts.length : undefined,
     },
-    { id: 'transactions' as NavTab, label: 'Kasir & Transaksi', icon: Receipt },
+    { id: 'transactions' as NavTab, label: 'Transaksi', icon: Receipt },
     { id: 'expenses' as NavTab, label: 'Pengeluaran', icon: ArrowDownCircle },
-    { id: 'reports' as NavTab, label: 'Laporan Keuangan', icon: BarChart3 },
-    { id: 'chat' as NavTab, label: 'Tanya Bisnis AI', icon: BotMessageSquare, isAi: true },
+    { id: 'chat' as NavTab, label: 'Asisten', icon: BotMessageSquare },
+    { id: 'reports' as NavTab, label: 'Laporan', icon: BarChart3 },
     { id: 'settings' as NavTab, label: 'Pengaturan Usaha', icon: SettingsIcon },
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-53px)] bg-[#0B0B0C] border-r border-[#242428] p-4 shrink-0">
+    <aside className="hidden lg:flex flex-col w-64 min-h-[calc(100vh-53px)] bg-[#0B0B0C] border-r border-[#242428] p-4 shrink-0 select-none">
       {/* Business Info Header */}
       <div className="p-3 mb-4 rounded-xl bg-[#141416] border border-[#242428]">
         <div className="flex items-center gap-2.5 mb-1.5">
@@ -102,12 +102,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             </button>
           );
         })}
-      </div>
-
-      {/* Subtle Footer Tagline */}
-      <div className="pt-3 border-t border-[#242428] px-2 text-center">
-        <p className="text-[11px] font-medium text-[#F5F5F5]">BisnisKu AI</p>
-        <p className="text-[10px] text-[#8A8A91]">Jualan jalan, bisnis makin jelas.</p>
       </div>
     </aside>
   );

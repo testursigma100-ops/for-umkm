@@ -436,6 +436,7 @@ export function TransactionsPage() {
                   const inCart = cart.find(c => c.product.id === product.id);
                   const isOutOfStock = product.stock <= 0;
                   const isMaxInCart = inCart ? inCart.quantity >= product.stock : false;
+                  const prodImg = product.image_url || product.image;
 
                   return (
                     <button
@@ -460,7 +461,7 @@ export function TransactionsPage() {
                       )}
 
                       <div>
-                        <div className="flex items-center justify-between text-[10px] mb-1">
+                        <div className="flex items-center justify-between text-[10px] mb-1.5">
                           <p className="text-[#8A8A91] font-medium">{product.category}</p>
                           {isOutOfStock ? (
                             <span className="text-red-400 font-semibold text-[9px]">Habis</span>
@@ -468,9 +469,24 @@ export function TransactionsPage() {
                             <span className="text-amber-400 font-semibold text-[9px]">Max Stok</span>
                           ) : null}
                         </div>
-                        <h4 className="text-xs font-semibold text-[#F5F5F5] line-clamp-2">
-                          {product.name}
-                        </h4>
+
+                        <div className="flex items-start gap-2">
+                          {prodImg ? (
+                            <img
+                              src={prodImg}
+                              alt={product.name}
+                              className="w-9 h-9 rounded-md object-cover bg-[#1C1C20] border border-[#242428] shrink-0 mt-0.5"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-md bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0 mt-0.5">
+                              <Package className="w-4 h-4 opacity-50" />
+                            </div>
+                          )}
+                          <h4 className="text-xs font-semibold text-[#F5F5F5] line-clamp-2 leading-tight">
+                            {product.name}
+                          </h4>
+                        </div>
                       </div>
 
                       <div className="mt-3 pt-2 border-t border-[#242428]/60 flex items-center justify-between">
@@ -523,15 +539,25 @@ export function TransactionsPage() {
                     {cart.map(item => {
                       const currentProd = products.find(p => p.id === item.product.id) || item.product;
                       const isMax = item.quantity >= currentProd.stock;
+                      const cartProdImg = item.product.image_url || item.product.image;
 
                       return (
                         <div key={item.product.id} className="py-2 flex items-center justify-between gap-2 text-xs">
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-[#F5F5F5] truncate">{item.product.name}</p>
-                            <p className="text-[11px] text-[#8A8A91] tabular-nums">
-                              {formatRupiah(item.product.selling_price)} / {item.product.unit}
-                              <span className="ml-1 text-[10px] text-[#8A8A91]">(Sisa: {currentProd.stock})</span>
-                            </p>
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {cartProdImg ? (
+                              <img
+                                src={cartProdImg}
+                                alt={item.product.name}
+                                className="w-8 h-8 rounded-md object-cover bg-[#1C1C20] border border-[#242428] shrink-0"
+                              />
+                            ) : null}
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-[#F5F5F5] truncate">{item.product.name}</p>
+                              <p className="text-[11px] text-[#8A8A91] tabular-nums">
+                                {formatRupiah(item.product.selling_price)} / {item.product.unit}
+                                <span className="ml-1 text-[10px] text-[#8A8A91]">(Sisa: {currentProd.stock})</span>
+                              </p>
+                            </div>
                           </div>
 
                           {/* Quantity Controls */}

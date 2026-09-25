@@ -1,0 +1,37 @@
+import React from 'react';
+
+interface LogoProps {
+  className?: string;
+  size?: number;
+}
+
+export function Logo({ className = '', size = 26 }: LogoProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={`shrink-0 ${className}`}
+      aria-label="BisnisKu Logo"
+    >
+      <g fill="currentColor">
+        {/* Top Left Vertical Stem */}
+        <path d="M40 32C40 27.5817 43.5817 24 48 24H60C64.4183 24 68 27.5817 68 32V68L40 92V32Z" />
+        
+        {/* Top Horizontal Arrow / Bar */}
+        <path d="M80 24H132L150 44L132 46H80V24Z" />
+        
+        {/* Rising Diagonal Growth Arrow (Center to Top Right) */}
+        <path d="M38 110L92 64L132 118L172 40H142L162 26L182 26C186.418 26 190 29.5817 190 34V54L176 74V44L132 128L92 78L48 118L38 110Z" />
+        
+        {/* Bottom Left Stem & Arrow Base */}
+        <path d="M40 108L68 84V172C68 176.418 64.4183 180 60 180H48C43.5817 180 40 176.418 40 172V108Z" />
+        
+        {/* Bottom Upward Inner Arrow & Loop */}
+        <path d="M80 180H146C168.091 180 186 162.091 186 140C186 117.909 168.091 100 146 100C138 100 130.5 102.5 124 106.8V126C128.5 122.2 134.2 120 140.5 120C151.822 120 161 129.178 161 140.5C161 151.822 151.822 161 140.5 161H104V134L118 134L92 108L66 134L80 134V180Z" />
+      </g>
+    </svg>
+  );
+}
