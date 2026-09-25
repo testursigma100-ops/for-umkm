@@ -331,14 +331,8 @@ export function ProductsPage() {
                 <div className="pt-2 border-t border-[#22222A] flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={async () => {
-                        try {
-                          await adjustStock(product.id, -1);
-                        } catch (err: any) {
-                          setToast({ message: err?.message || 'Gagal mengurangi stok', type: 'error' });
-                        }
-                      }}
-                      className="w-7 h-7 rounded-md bg-[#16161B] hover:bg-[#22222A] text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-colors"
+                      onClick={() => adjustStock(product.id, -1)}
+                      className="w-7 h-7 rounded-md bg-[#16161B] hover:bg-[#22222A] active:scale-95 text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-all cursor-pointer"
                       title="Kurangi 1 Stok"
                     >
                       -
@@ -348,14 +342,8 @@ export function ProductsPage() {
                       <span className="text-[10px] text-[#7A7A84] font-normal">{product.unit}</span>
                     </span>
                     <button
-                      onClick={async () => {
-                        try {
-                          await adjustStock(product.id, 1);
-                        } catch (err: any) {
-                          setToast({ message: err?.message || 'Gagal menambah stok', type: 'error' });
-                        }
-                      }}
-                      className="w-7 h-7 rounded-md bg-[#16161B] hover:bg-[#22222A] text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-colors"
+                      onClick={() => adjustStock(product.id, 1)}
+                      className="w-7 h-7 rounded-md bg-[#16161B] hover:bg-[#22222A] active:scale-95 text-[#F0F0F2] flex items-center justify-center font-bold text-xs transition-all cursor-pointer"
                       title="Tambah 1 Stok"
                     >
                       +

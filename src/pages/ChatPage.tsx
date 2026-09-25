@@ -13,6 +13,200 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
+interface MarkdownContentProps {
+  content: string;
+  isUser?: boolean;
+}
+
+function renderFormattedInline(text: string, isUser = false): React.ReactNode {
+  // Regex to match **bold**, `code`, and *italic*
+  const regex = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let keyIndex = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    const token = match[0];
+    if (token.startsWith('**') && token.endsWith('**')) {
+      parts.push(
+        <strong
+          key={`b-${keyIndex++}`}
+          className={`font-semibold ${isUser ? 'text-black' : 'text-white'}`}
+        >
+          {token.slice(2, -2)}
+        </strong>
+      );
+    } else if (token.startsWith('`') && token.endsWith('`')) {
+      parts.push(
+        <code
+          key={`c-${keyIndex++}`}
+          className={`px-1 py-0.5 rounded font-mono text-[11px] ${
+            isUser
+              ? 'bg-black/10 text-black border border-black/20'
+              : 'bg-[#1C1C22] text-[#10B981] border border-[#2A2A35]'
+          }`}
+        >
+          {token.slice(1, -1)}
+        </code>
+      );
+    } else if (token.startsWith('*') && token.endsWith('*')) {
+      parts.push(
+        <em
+          key={`i-${keyIndex++}`}
+          className={`italic ${isUser ? 'text-black/90' : 'text-[#E0E0E6]'}`}
+        >
+          {token.slice(1, -1)}
+        </em>
+      );
+    }
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+function MarkdownContent({ content, isUser = false }: MarkdownContentProps) {
+  if (isUser) {
+    return <div className="whitespace-pre-wrap">{content}</div>;
+  }
+
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+
+  let inList: 'bullet' | 'number' | null = null;
+  let listItems: React.ReactNode[] = [];
+
+  const flushList = (keyPrefix: string) => {
+    if (inList && listItems.length > 0) {
+      if (inList === 'bullet') {
+        elements.push(
+          <ul key={`ul-${keyPrefix}`} className="space-y-1.5 my-1.5 pl-0.5">
+            {listItems}
+          </ul>
+        );
+      } else {
+        elements.push(
+          <ol key={`ol-${keyPrefix}`} className="space-y-1.5 my-1.5 pl-0.5">
+            {listItems}
+          </ol>
+        );
+      }
+      listItems = [];
+      inList = null;
+    }
+  };
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+
+    // Check for empty line
+    if (!trimmed) {
+      flushList(`empty-${index}`);
+      elements.push(<div key={`space-${index}`} className="h-2" />);
+      return;
+    }
+
+    // Horizontal Rule
+    if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
+      flushList(`hr-${index}`);
+      elements.push(<hr key={`hr-${index}`} className="my-2.5 border-[#22222A]" />);
+      return;
+    }
+
+    // Headings
+    if (trimmed.startsWith('#### ')) {
+      flushList(`h4-${index}`);
+      elements.push(
+        <h5 key={`h4-${index}`} className="text-xs font-bold text-[#10B981] mt-2 mb-1">
+          {renderFormattedInline(trimmed.slice(5), isUser)}
+        </h5>
+      );
+      return;
+    }
+    if (trimmed.startsWith('### ')) {
+      flushList(`h3-${index}`);
+      elements.push(
+        <h4 key={`h3-${index}`} className="text-xs sm:text-sm font-bold text-[#F0F0F2] mt-2.5 mb-1 flex items-center gap-1.5">
+          {renderFormattedInline(trimmed.slice(4), isUser)}
+        </h4>
+      );
+      return;
+    }
+    if (trimmed.startsWith('## ')) {
+      flushList(`h2-${index}`);
+      elements.push(
+        <h3 key={`h2-${index}`} className="text-sm font-bold text-white mt-3 mb-1.5">
+          {renderFormattedInline(trimmed.slice(3), isUser)}
+        </h3>
+      );
+      return;
+    }
+    if (trimmed.startsWith('# ')) {
+      flushList(`h1-${index}`);
+      elements.push(
+        <h2 key={`h1-${index}`} className="text-sm sm:text-base font-bold text-white mt-3.5 mb-2">
+          {renderFormattedInline(trimmed.slice(2), isUser)}
+        </h2>
+      );
+      return;
+    }
+
+    // Bullet List (- item, * item, • item, + item)
+    const bulletMatch = trimmed.match(/^([-*•+])\s+(.+)$/);
+    if (bulletMatch) {
+      if (inList !== 'bullet') {
+        flushList(`before-bullet-${index}`);
+        inList = 'bullet';
+      }
+      listItems.push(
+        <li key={`bullet-${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-[#D1D1DB]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] mt-1.5 shrink-0" />
+          <span className="flex-1">{renderFormattedInline(bulletMatch[2], isUser)}</span>
+        </li>
+      );
+      return;
+    }
+
+    // Numbered List (1. item)
+    const numberMatch = trimmed.match(/^(\d+)\.\s+(.+)$/);
+    if (numberMatch) {
+      if (inList !== 'number') {
+        flushList(`before-number-${index}`);
+        inList = 'number';
+      }
+      listItems.push(
+        <li key={`num-${index}`} className="flex items-start gap-2 text-xs leading-relaxed text-[#D1D1DB]">
+          <span className="text-[10px] font-bold text-[#10B981] bg-[#10B981]/15 px-1.5 py-0.5 rounded shrink-0">
+            {numberMatch[1]}
+          </span>
+          <span className="flex-1">{renderFormattedInline(numberMatch[2], isUser)}</span>
+        </li>
+      );
+      return;
+    }
+
+    // Regular paragraph text
+    flushList(`para-${index}`);
+    elements.push(
+      <p key={`p-${index}`} className="text-xs leading-relaxed text-[#E4E4E9]">
+        {renderFormattedInline(trimmed, isUser)}
+      </p>
+    );
+  });
+
+  flushList('final');
+
+  return <div className="space-y-1">{elements}</div>;
+}
+
 export function ChatPage() {
   const { profile, business, products, transactions, expenses, dashboardSummary, user } = useBusiness();
 
@@ -352,9 +546,7 @@ export function ChatPage() {
                     : 'bg-[#101013] border border-[#22222A] text-[#F0F0F2]'
                 }`}
               >
-                <div className="whitespace-pre-wrap space-y-1">
-                  {msg.content}
-                </div>
+                <MarkdownContent content={msg.content} isUser={isUser} />
               </div>
             </div>
           );
