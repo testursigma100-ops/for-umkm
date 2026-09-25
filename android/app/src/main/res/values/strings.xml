@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BisnisKu</string>
+    <string name="title_activity_main">BisnisKu</string>
+    <string name="package_name">com.bisnisku.app</string>
+    <string name="custom_url_scheme">com.bisnisku.app</string>
+</resources>
