@@ -75,7 +75,11 @@ export async function processProductImage(
           upsert: true,
         });
 
-      if (!error && data?.path) {
+      if (error) {
+      console.error('PRODUCT IMAGE UPLOAD ERROR:', error);
+    }
+
+    if (!error && data?.path) {
         const { data: publicUrlData } = supabase.storage
           .from('product-images')
           .getPublicUrl(data.path);

@@ -281,6 +281,8 @@ export function BusinessProvider({
               min_stock: Number(
                 p.min_stock || 5
               ),
+              image_url: p.image_url || undefined,
+              image: p.image_url || undefined,
               created_at:
                 p.created_at ||
                 new Date().toISOString(),
@@ -1496,28 +1498,15 @@ export function BusinessProvider({
     try {
       const payload: any = {
         business_id: bizId,
-        name:
-          data.name.trim(),
-        category:
-          data.category,
-        cost_price: Number(
-          data.hpp || 0
-        ),
-        selling_price:
-          Number(
-            data.selling_price ||
-              0
-          ),
-        stock: Number(
-          data.stock || 0
-        ),
-        unit:
-          data.unit ||
-          'porsi',
-        created_at:
-          new Date().toISOString(),
-        updated_at:
-          new Date().toISOString(),
+        name: data.name.trim(),
+        category: data.category,
+        cost_price: Number(data.hpp || 0),
+        selling_price: Number(data.selling_price || 0),
+        stock: Number(data.stock || 0),
+        unit: data.unit || 'porsi',
+        image_url: data.image_url || data.image || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       };
 
       const {
@@ -1564,6 +1553,8 @@ export function BusinessProvider({
         unit:
           created.unit ||
           'porsi',
+  image_url: created.image_url || undefined,
+  image: created.image_url || undefined,
         min_stock:
           Number(
             data.min_stock ||
