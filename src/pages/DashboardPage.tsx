@@ -1,19 +1,21 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { useBusiness } from '../context/BusinessContext';
-import { formatRupiah, formatNumber, formatDateTime } from '../utils/formatters';
+import { formatRupiah } from '../utils/formatters';
 import { NavTab } from '../components/layout/BottomNav';
 import {
-  TrendingUp,
-  ArrowDownCircle,
-  DollarSign,
-  ShoppingBag,
-  AlertTriangle,
-  ArrowRight,
-  Receipt,
-  Plus,
+  ArrowUpRight,
   BotMessageSquare,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  CircleDollarSign,
   Package,
-  Activity,
+  Plus,
+  Receipt,
+  ShoppingBag,
+  Sparkles,
+  TrendingUp,
+  TriangleAlert,
 } from 'lucide-react';
 
 interface DashboardPageProps {
@@ -22,11 +24,15 @@ interface DashboardPageProps {
   onOpenQuickExpense: () => void;
 }
 
+type Range = 'Hari Ini' | '7 Hari' | '30 Hari' | 'Custom';
+
 export function DashboardPage({
   onNavigate,
   onOpenQuickTx,
 }: DashboardPageProps) {
   const { profile, dashboardSummary } = useBusiness();
+  const [range, setRange] = useState<Range>('7 Hari');
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const {
     omzetToday,
@@ -39,534 +45,466 @@ export function DashboardPage({
     lowStockProducts,
   } = dashboardSummary;
 
-  const maxTrendOmzet = Math.max(
-    ...sevenDaysTrend.map(d => d.omzet),
-    100000
-  );
+  const maxTrendOmzet = Math.max(...sevenDaysTrend.map(d => d.omzet), 100000);
+  const totalTrendOmzet = sevenDaysTrend.reduce((sum, day) => sum + day.omzet, 0);
+  const averageTransaction = transactionsCountToday > 0
+    ? omzetToday / transactionsCountToday
+    : 0;
+  const hppToday = Math.max(omzetToday - estimatedProfitToday - expensesToday, 0);
+  const profitMargin = omzetToday > 0 ? (estimatedProfitToday / omzetToday) * 100 : 0;
+  const hppRatio = omzetToday > 0 ? (hppToday / omzetToday) * 100 : 0;
+  const expenseRatio = omzetToday > 0 ? (expensesToday / omzetToday) * 100 : 0;
 
-  // Build a smooth SVG line from the existing 7-day data.
-  const chartWidth = 700;
-  const chartHeight = 220;
-  const chartPadding = 16;
+  const chart = useMemo(() => {
+    const width = 760;
+    const height = 250;
+    const left = 16;
+    const right = 12;
+    const top = 18;
+    const bottom = 28;
+    const innerW = width - left - right;
+    const innerH = height - top - bottom;
 
-  const points = sevenDaysTrend.map((day, index) => {
-    const x =
-      sevenDaysTrend.length <= 1
-        ? chartWidth / 2
-        : chartPadding +
-          (index / (sevenDaysTrend.length - 1)) *
-            (chartWidth - chartPadding * 2);
+    const points = sevenDaysTrend.map((day, index) => {
+      const x = sevenDaysTrend.length <= 1
+        ? width / 2
+        : left + (index / (sevenDaysTrend.length - 1)) * innerW;
+      const y = top + innerH - (day.omzet / maxTrendOmzet) * innerH;
+      return { ...day, x, y };
+    });
 
-    const normalized = day.omzet / maxTrendOmzet;
-    const y =
-      chartHeight -
-      chartPadding -
-      normalized * (chartHeight - chartPadding * 2);
-
-    return { x, y, ...day };
-  });
-
-  const linePath = points
-    .map((point, index) =>
-      `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-    )
-    .join(' ');
-
-  const areaPath =
-    points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`
+    const line = points
+      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+      .join(' ');
+    const area = points.length
+      ? `${line} L ${points[points.length - 1].x.toFixed(2)} ${height - bottom} L ${points[0].x.toFixed(2)} ${height - bottom} Z`
       : '';
 
+    return { width, height, left, right, top, bottom, points, line, area };
+  }, [sevenDaysTrend, maxTrendOmzet]);
+
+  const activePoint = hoverIndex !== null ? chart.points[hoverIndex] : chart.points[chart.points.length - 1];
+
+  const productImage = (product: any) => product?.image_url || product?.image || '';
+  const transactionImage = (transaction: any) => transaction?.items?.[0]?.image_url || transaction?.items?.[0]?.image || '';
+
   return (
-    <div className="pb-24 md:pb-8 animate-[fadeIn_.35s_ease-out]">
-
+    <div className="min-h-full pb-24 md:pb-10 text-[#E9ECEC] animate-[dashFade_.35s_ease-out]">
       {/* HEADER */}
-      <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F5F5F5]" />
-            <span className="text-[10px] uppercase tracking-[0.18em] text-[#666]">
-              Business overview
-            </span>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[21px] font-semibold tracking-[-0.025em] text-[#F1F3F2] sm:text-2xl">
+              Selamat datang kembali, {profile.business_name ? profile.business_name : 'Ujayy'}
+            </h1>
+            <span className="text-base">👋</span>
           </div>
-
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#F5F5F5]">
-            Dashboard
-          </h1>
-
-          <p className="mt-1 text-xs text-[#777]">
-            {profile.business_name || 'Toko Anda'} · Performa hari ini
+          <p className="mt-1 text-[11px] text-[#727979]">
+            Berikut ringkasan perkembangan usaha kamu hari ini.
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="hidden sm:flex h-9 items-center gap-2 rounded-full border border-[#24292A] bg-[#0D1010] px-3.5 text-[11px] text-[#B7BDBB]"
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            {new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date())}
+            <ChevronDown className="h-3 w-3 text-[#606766]" />
+          </button>
           <button
             type="button"
             onClick={() => onNavigate('chat')}
-            className="group flex items-center gap-2 border border-[#29292D] bg-[#111113] px-3 py-2 text-xs font-medium text-[#D8D8D8] transition-all duration-200 hover:border-[#444] hover:bg-[#18181A] active:scale-[0.98]"
+            className="flex h-9 items-center gap-2 rounded-full border border-[#24292A] bg-[#0D1010] px-3 text-[11px] text-[#B7BDBB] transition-colors hover:bg-[#141818]"
           >
-            <BotMessageSquare className="h-3.5 w-3.5 text-[#999] group-hover:text-white" />
-            Asisten
+            <BotMessageSquare className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Asisten</span>
           </button>
-
           <button
             type="button"
             onClick={onOpenQuickTx}
-            className="flex items-center gap-2 bg-[#F5F5F5] px-3.5 py-2 text-xs font-semibold text-[#0B0B0C] transition-all duration-200 hover:bg-white active:scale-[0.97]"
+            className="flex h-9 items-center gap-1.5 rounded-full bg-[#E9F1EE] px-3.5 text-[11px] font-semibold text-[#0B1110] transition-transform active:scale-[.98]"
           >
             <Plus className="h-3.5 w-3.5" />
             Transaksi
           </button>
         </div>
-      </section>
+      </header>
 
-      {/* MAIN REVENUE BLOCK */}
-      <section className="relative overflow-hidden border border-[#29292D] bg-[#111113] p-4 sm:p-6 mb-4">
-        <div className="absolute right-0 top-0 h-32 w-32 bg-white/[0.025] blur-3xl" />
+      {/* HERO GRID */}
+      <section className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
+        {/* REVENUE CHART */}
+        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-4 sm:p-5">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_10%,rgba(104,194,168,.07),transparent_32%)]" />
+          <div className="relative">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[11px] text-[#9DA5A2]">
+                  <TrendingUp className="h-4 w-4 text-[#9ACFBE]" />
+                  <span>Total Omzet</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
+                  <span className="text-[34px] font-semibold leading-none tracking-[-0.035em] text-[#F3F5F4] tabular-nums sm:text-[39px]">
+                    {formatRupiah(omzetToday)}
+                  </span>
+                  <span className="mb-0.5 inline-flex items-center gap-1 text-[12px] font-medium text-[#6ED1AE]">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    {profitMargin.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#69716F]">
+                  <span>Transaksi hari ini&nbsp; {transactionsCountToday}</span>
+                  <span className="h-0.5 w-0.5 rounded-full bg-[#454B4A]" />
+                  <span>Rata-rata&nbsp; {formatRupiah(averageTransaction)}</span>
+                </div>
+              </div>
 
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-[#666]">
-              <Activity className="h-3.5 w-3.5" />
-              Omzet hari ini
+              <div className="inline-flex self-start rounded-lg border border-[#282D2D] bg-[#101313] p-0.5">
+                {(['Hari Ini', '7 Hari', '30 Hari', 'Custom'] as Range[]).map(item => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setRange(item)}
+                    className={`rounded-md px-2.5 py-1.5 text-[9px] transition-colors ${
+                      range === item
+                        ? 'bg-[#1B2020] text-[#E6ECE9] shadow-sm'
+                        : 'text-[#727A78] hover:text-[#B9C0BD]'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-2 text-3xl sm:text-5xl font-semibold tracking-tight text-[#F5F5F5] tabular-nums">
-              {formatRupiah(omzetToday)}
-            </div>
+            <div className="relative mt-5 h-[265px] select-none touch-none sm:h-[285px]">
+              <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
+                {[0, 1, 2, 3, 4].map(i => (
+                  <div key={i} className="border-t border-[#1A2020]" />
+                ))}
+              </div>
 
-            <div className="mt-2 flex items-center gap-2 text-xs">
-              <span className="text-[#999]">
-                {transactionsCountToday} transaksi selesai
-              </span>
+              <div className="pointer-events-none absolute left-0 top-0 bottom-7 flex flex-col justify-between text-[9px] text-[#5F6865]">
+                {[100, 75, 50, 25, 0].map((pct, i) => (
+                  <span key={pct}>{formatRupiah(Math.round((maxTrendOmzet * pct) / 100)).replace('Rp ', '')}</span>
+                ))}
+              </div>
 
-              <span className="h-1 w-1 rounded-full bg-[#555]" />
-
-              <span
-                className={
-                  estimatedProfitToday >= 0
-                    ? 'text-[#D8D8D8]'
-                    : 'text-[#888]'
-                }
+              <svg
+                viewBox={`0 0 ${chart.width} ${chart.height}`}
+                preserveAspectRatio="none"
+                className="absolute inset-x-7 top-0 h-[calc(100%-28px)] w-[calc(100%-28px)] overflow-visible"
+                onMouseLeave={() => setHoverIndex(null)}
+                onMouseMove={event => {
+                  if (!chart.points.length) return;
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const x = ((event.clientX - rect.left) / rect.width) * chart.width;
+                  let nearest = 0;
+                  let distance = Infinity;
+                  chart.points.forEach((point, index) => {
+                    const d = Math.abs(point.x - x);
+                    if (d < distance) {
+                      distance = d;
+                      nearest = index;
+                    }
+                  });
+                  setHoverIndex(nearest);
+                }}
+                onTouchMove={event => {
+                  if (!chart.points.length) return;
+                  const rect = event.currentTarget.getBoundingClientRect();
+                  const x = ((event.touches[0].clientX - rect.left) / rect.width) * chart.width;
+                  let nearest = 0;
+                  let distance = Infinity;
+                  chart.points.forEach((point, index) => {
+                    const d = Math.abs(point.x - x);
+                    if (d < distance) {
+                      distance = d;
+                      nearest = index;
+                    }
+                  });
+                  setHoverIndex(nearest);
+                }}
               >
-                {estimatedProfitToday >= 0 ? '+' : ''}
-                {formatRupiah(estimatedProfitToday)} laba
-              </span>
+                <defs>
+                  <linearGradient id="bisniskuChartFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#79CBB2" stopOpacity="0.17" />
+                    <stop offset="100%" stopColor="#79CBB2" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d={chart.area} fill="url(#bisniskuChartFill)" />
+                <path
+                  d={chart.line}
+                  fill="none"
+                  stroke="#9DD7C5"
+                  strokeWidth="2.1"
+                  vectorEffect="non-scaling-stroke"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  pathLength="1"
+                  className="animate-[chartDraw_900ms_ease-out_forwards]"
+                />
+                {chart.points.map((point, index) => (
+                  <circle
+                    key={point.date}
+                    cx={point.x}
+                    cy={point.y}
+                    r={hoverIndex === index ? 4.5 : index === chart.points.length - 1 ? 3.5 : 2}
+                    fill="#0D1010"
+                    stroke="#A7DECE"
+                    strokeWidth={hoverIndex === index ? 2 : 1.3}
+                  />
+                ))}
+                {activePoint && hoverIndex !== null && (
+                  <>
+                    <line
+                      x1={activePoint.x}
+                      x2={activePoint.x}
+                      y1={8}
+                      y2={chart.height - chart.bottom}
+                      stroke="#7E8985"
+                      strokeDasharray="3 4"
+                      strokeWidth="1"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <circle
+                      cx={activePoint.x}
+                      cy={activePoint.y}
+                      r="7"
+                      fill="#9DD7C5"
+                      fillOpacity="0.13"
+                    />
+                  </>
+                )}
+              </svg>
+
+              {activePoint && hoverIndex !== null && (
+                <div
+                  className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 rounded-md border border-[#2A3230] bg-[#0B0F0F]/95 px-3 py-2 shadow-xl backdrop-blur"
+                  style={{
+                    left: `calc(28px + ${((activePoint.x / chart.width) * 100)}% - 14px)`,
+                    top: Math.max(4, (activePoint.y / chart.height) * 100 - 15) + '%',
+                  }}
+                >
+                  <p className="text-[9px] text-[#68716E]">{activePoint.label}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-[#EFF4F2]">{formatRupiah(activePoint.omzet)}</p>
+                </div>
+              )}
+
+              <div className="pointer-events-none absolute inset-x-7 bottom-0 flex justify-between text-[9px] text-[#59615F]">
+                {sevenDaysTrend.map(day => <span key={day.date}>{day.label}</span>)}
+              </div>
+            </div>
+
+            <div className="mt-1 flex items-center justify-between border-t border-[#1C2221] pt-2 text-[9px] text-[#5E6764]">
+              <span>{range === '7 Hari' ? 'Performa 7 hari terakhir' : 'Data tersedia dari ringkasan usaha'}</span>
+              <span>{formatRupiah(totalTrendOmzet)} total periode</span>
             </div>
           </div>
+        </div>
 
-          <div className="lg:text-right">
-            <p className="text-[10px] uppercase tracking-[0.15em] text-[#666]">
-              Status
-            </p>
-            <p className="mt-1 text-sm font-medium text-[#D8D8D8]">
-              {estimatedProfitToday >= 0
-                ? 'Operasional positif'
-                : 'Perlu perhatian'}
-            </p>
-          </div>
+        {/* RIGHT SUMMARY */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
+          <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <CircleDollarSign className="h-4 w-4 text-[#A7B2AE]" />
+                <h2 className="text-sm font-medium text-[#E4E8E6]">Ringkasan Keuangan</h2>
+              </div>
+            </div>
+            {[
+              { label: 'Total Omzet', value: omzetToday, meta: `${profitMargin.toFixed(1)}% margin`, icon: CircleDollarSign },
+              { label: 'Keuntungan', value: estimatedProfitToday, meta: `${profitMargin.toFixed(1)}% dari omzet`, icon: TrendingUp },
+              { label: 'HPP', value: hppToday, meta: `${hppRatio.toFixed(1)}% dari omzet`, icon: Package },
+              { label: 'Pengeluaran', value: expensesToday, meta: `${expenseRatio.toFixed(1)}% dari omzet`, icon: Receipt },
+            ].map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className={`flex items-center gap-3 py-3 ${index < 3 ? 'border-b border-[#1D2322]' : ''}`}>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19]">
+                    <Icon className="h-3.5 w-3.5 text-[#AAB3B0]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[9px] text-[#69716F]">{item.label}</p>
+                    <p className="mt-0.5 text-[13px] font-medium text-[#E8ECEA] tabular-nums">{formatRupiah(item.value)}</p>
+                  </div>
+                  <span className="text-[9px] font-medium text-[#66C8A6]">{item.meta}</span>
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#4E5654]" />
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-4">
+            <div className="mb-1 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TriangleAlert className="h-4 w-4 text-[#D7B46A]" />
+                <h2 className="text-sm font-medium text-[#E4E8E6]">Stok Menipis</h2>
+              </div>
+              <button type="button" onClick={() => onNavigate('products')} className="text-[9px] text-[#68716E] hover:text-[#D0D6D3]">Lihat Semua</button>
+            </div>
+            {lowStockProducts.length === 0 ? (
+              <p className="py-5 text-center text-[10px] text-[#5E6764]">Semua stok masih aman.</p>
+            ) : (
+              lowStockProducts.slice(0, 3).map((product: any, index) => (
+                <button
+                  key={product.id || product.name || index}
+                  type="button"
+                  onClick={() => onNavigate('products')}
+                  className="flex w-full items-center gap-3 border-t border-[#1D2322] py-2.5 text-left"
+                >
+                  {productImage(product) ? (
+                    <img src={productImage(product)} alt="" className="h-10 w-10 rounded-md object-cover" />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[#252C2A] bg-[#151A19]"><Package className="h-4 w-4 text-[#66706C]" /></div>
+                  )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[10px] font-medium text-[#D8DEDB]">{product.name}</span>
+                    <span className="mt-0.5 block text-[9px] text-[#68716E]">{product.stock} {product.unit}</span>
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-[#4E5654]" />
+                </button>
+              ))
+            )}
+          </section>
         </div>
       </section>
 
-      {/* KPI GRID */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 border-t border-l border-[#29292D] mb-4">
+      {/* KPI STRIP */}
+      <section className="mt-3 grid grid-cols-1 overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] sm:grid-cols-3">
         {[
-          {
-            title: 'Omzet',
-            value: formatRupiah(omzetToday),
-            subtitle: `${transactionsCountToday} pesanan`,
-            icon: DollarSign,
-          },
-          {
-            title: 'Pengeluaran',
-            value: formatRupiah(expensesToday),
-            subtitle: 'Operasional',
-            icon: ArrowDownCircle,
-          },
-          {
-            title: 'Estimasi laba',
-            value: formatRupiah(estimatedProfitToday),
-            subtitle: 'Omzet - HPP - biaya',
-            icon: TrendingUp,
-          },
-          {
-            title: 'Transaksi',
-            value: `${transactionsCountToday}`,
-            subtitle: 'Nota hari ini',
-            icon: ShoppingBag,
-          },
+          { label: 'Transaksi', value: transactionsCountToday.toString(), sub: 'Berhasil', delta: profitMargin >= 0 ? `${transactionsCountToday} hari ini` : '—', icon: ShoppingBag },
+          { label: 'Rata-rata Transaksi', value: formatRupiah(averageTransaction), sub: 'per transaksi', delta: transactionsCountToday ? 'Aktif' : 'Belum ada', icon: Receipt },
+          { label: 'Produk Terjual', value: topProductsToday.reduce((sum, item) => sum + Number(item.quantity || 0), 0).toString(), sub: 'total item', delta: topProductsToday.length ? `${topProductsToday.length} produk` : '—', icon: Package },
         ].map((item, index) => {
           const Icon = item.icon;
-
           return (
-            <div
-              key={item.title}
-              className="group border-r border-b border-[#29292D] bg-[#0F0F11] p-4 transition-colors duration-200 hover:bg-[#151517]"
-              style={{
-                animation: 'slideUp .4s ease-out both',
-                animationDelay: `${index * 60}ms`,
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase tracking-[0.12em] text-[#666]">
-                  {item.title}
-                </span>
-
-                <Icon className="h-3.5 w-3.5 text-[#555] transition-colors group-hover:text-[#AAA]" />
+            <div key={item.label} className={`flex items-center gap-3 px-4 py-3.5 ${index < 2 ? 'border-b border-[#1D2322] sm:border-b-0 sm:border-r' : ''}`}>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19]">
+                <Icon className="h-4 w-4 text-[#AEB8B4]" />
               </div>
-
-              <div className="mt-3 text-base sm:text-lg font-semibold text-[#EDEDED] tabular-nums">
-                {item.value}
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] text-[#68716E]">{item.label}</p>
+                <p className="mt-0.5 text-[13px] font-medium text-[#E7ECE9] tabular-nums">{item.value}</p>
+                <p className="text-[9px] text-[#5E6764]">{item.sub}</p>
               </div>
-
-              <div className="mt-1 text-[10px] text-[#666] truncate">
-                {item.subtitle}
-              </div>
+              <span className="text-[9px] font-medium text-[#67C7A5]">{item.delta}</span>
             </div>
           );
         })}
       </section>
 
-      {/* LOW STOCK */}
-      {lowStockProducts.length > 0 && (
-        <div className="mb-4 flex items-center justify-between gap-3 border border-[#29292D] bg-[#111113] px-3 py-2.5">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-[#AAA]" />
-
-            <div className="min-w-0">
-              <p className="truncate text-xs font-medium text-[#DDD]">
-                Stok menipis · {lowStockProducts.length} produk
-              </p>
-
-              <p className="truncate text-[10px] text-[#666]">
-                {lowStockProducts
-                  .map(p => `${p.name} (${p.stock} ${p.unit})`)
-                  .slice(0, 2)
-                  .join(', ')}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onNavigate('products')}
-            className="flex shrink-0 items-center gap-1 text-[10px] text-[#999] hover:text-white"
-          >
-            Periksa
-            <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-      )}
-
-      {/* CHART + TOP PRODUCTS */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
-
-        {/* CHART */}
-        <div className="lg:col-span-2 border border-[#29292D] bg-[#111113] p-4 sm:p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-[#EDEDED]">
-                  Performa omzet
-                </h2>
-
-                <span className="text-[9px] uppercase tracking-wider text-[#555]">
-                  7D
-                </span>
-              </div>
-
-              <p className="mt-1 text-[10px] text-[#666]">
-                Pergerakan omzet 7 hari terakhir
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('reports')}
-              className="text-[10px] text-[#777] hover:text-white"
-            >
-              Laporan →
-            </button>
-          </div>
-
-          <div className="relative h-[220px] w-full overflow-hidden">
-            {/* horizontal guides */}
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between py-4">
-              {[0, 1, 2, 3].map(i => (
-                <div
-                  key={i}
-                  className="border-t border-dashed border-[#202024]"
-                />
-              ))}
-            </div>
-
-            <svg
-              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-              preserveAspectRatio="none"
-              className="relative h-full w-full overflow-visible"
-            >
-              <defs>
-                <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.10" />
-                  <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-
-              <path
-                d={areaPath}
-                fill="url(#chartFill)"
-                className="opacity-0 animate-[fadeIn_.8s_ease-out_.35s_forwards]"
-              />
-
-              <path
-                d={linePath}
-                fill="none"
-                stroke="#EDEDED"
-                strokeWidth="2"
-                vectorEffect="non-scaling-stroke"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                pathLength="1"
-                className="animate-[drawLine_1.1s_ease-out_forwards]"
-              />
-
-              {points.map((point, index) => {
-                const isToday = index === points.length - 1;
-
-                return (
-                  <g key={point.date}>
-                    <circle
-                      cx={point.x}
-                      cy={point.y}
-                      r={isToday ? 4 : 2.5}
-                      fill="#111113"
-                      stroke="#F5F5F5"
-                      strokeWidth={isToday ? 2 : 1}
-                      className="transition-all duration-200 hover:r-5"
-                    />
-
-                    <title>
-                      {point.label}: {formatNumber(point.omzet)}
-                    </title>
-                  </g>
-                );
-              })}
-            </svg>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 border-t border-[#29292D] pt-2">
-            {sevenDaysTrend.map((day, index) => (
-              <div key={day.date} className="text-center">
-                <span
-                  className={`text-[9px] ${
-                    index === sevenDaysTrend.length - 1
-                      ? 'font-semibold text-[#F5F5F5]'
-                      : 'text-[#555]'
-                  }`}
-                >
-                  {day.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3 flex items-center justify-between text-[10px] text-[#666]">
-            <span>Terendah — tertinggi</span>
-            <span className="tabular-nums">
-              Max {formatRupiah(maxTrendOmzet)}
-            </span>
-          </div>
-        </div>
-
+      {/* LOWER GRID */}
+      <section className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[1fr_1.04fr]">
         {/* TOP PRODUCTS */}
-        <div className="border border-[#29292D] bg-[#111113] p-4 sm:p-5">
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-[#EDEDED]">
-                Produk terlaris
-              </h2>
-
-              <p className="mt-1 text-[10px] text-[#666]">
-                Penjualan hari ini
-              </p>
+        <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-4 sm:p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#D7B46A]" />
+              <h2 className="text-sm font-medium text-[#E4E8E6]">Produk Terlaris</h2>
             </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('products')}
-              className="text-[10px] text-[#777] hover:text-white"
-            >
-              Katalog
-            </button>
+            <button type="button" onClick={() => onNavigate('products')} className="text-[9px] text-[#68716E] hover:text-[#D0D6D3]">Lihat Semua</button>
           </div>
 
           {topProductsToday.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Package className="mb-2 h-6 w-6 text-[#444]" />
-              <p className="text-[10px] text-[#666]">
-                Belum ada penjualan hari ini.
-              </p>
+              <Package className="mb-2 h-6 w-6 text-[#454E4B]" />
+              <p className="text-[10px] text-[#66706C]">Belum ada penjualan hari ini.</p>
             </div>
           ) : (
-            <div className="mt-5">
-              {topProductsToday.map((prod, idx) => (
-                <div
-                  key={prod.name}
-                  className="group flex items-center gap-3 border-b border-[#222226] py-3 last:border-none"
-                >
-                  <span className="w-5 text-[10px] font-mono text-[#555]">
-                    0{idx + 1}
-                  </span>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-[#DDD]">
-                      {prod.name}
-                    </p>
-
-                    <p className="mt-0.5 text-[9px] text-[#666]">
-                      {prod.quantity} terjual
-                    </p>
+            <div className="mt-3">
+              {topProductsToday.slice(0, 5).map((product: any, index) => {
+                const maxQty = Math.max(...topProductsToday.map(item => Number(item.quantity || 0)), 1);
+                const percent = Math.round((Number(product.quantity || 0) / maxQty) * 100);
+                return (
+                  <div key={product.name || index} className="grid grid-cols-[28px_40px_minmax(0,1fr)_120px_30px] items-center gap-2 border-t border-[#1D2322] py-3">
+                    <span className="text-[11px] text-[#69716F]">{String(index + 1).padStart(2, '0')}</span>
+                    {productImage(product) ? (
+                      <img src={productImage(product)} alt="" className="h-9 w-9 rounded-md object-cover" />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#252C2A] bg-[#151A19]"><Package className="h-4 w-4 text-[#68716E]" /></div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-[10px] font-medium text-[#DCE1DF]">{product.name}</p>
+                      <p className="mt-0.5 text-[9px] text-[#69716F]">{product.quantity} terjual</p>
+                    </div>
+                    <div className="hidden sm:block">
+                      <div className="h-1 rounded-full bg-[#242B29]">
+                        <div className="h-full rounded-full bg-[#79CBB2] transition-[width] duration-500" style={{ width: `${Math.max(percent, 2)}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-right text-[9px] text-[#7B8581]">{product.quantity}</span>
                   </div>
-
-                  <span className="text-[10px] font-semibold text-[#AAA] tabular-nums">
-                    {formatRupiah(prod.revenue)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+        </section>
 
-          <button
-            type="button"
-            onClick={onOpenQuickTx}
-            className="mt-4 flex w-full items-center justify-center gap-1.5 border border-[#29292D] bg-[#151517] py-2.5 text-[10px] font-semibold text-[#CCC] transition-colors hover:bg-[#1C1C1F] hover:text-white"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Pesanan baru
-          </button>
-        </div>
-      </section>
-
-      {/* RECENT TRANSACTIONS */}
-      <section className="border border-[#29292D] bg-[#111113]">
-        <div className="flex items-center justify-between border-b border-[#29292D] px-4 py-3.5 sm:px-5">
-          <div>
-            <h2 className="text-sm font-semibold text-[#EDEDED]">
-              Transaksi terbaru
-            </h2>
-
-            <p className="mt-0.5 text-[10px] text-[#666]">
-              Aktivitas kasir terakhir
-            </p>
+        {/* RECENT */}
+        <section className="overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
+          <div className="flex items-center justify-between border-b border-[#24292A] px-4 py-4 sm:px-5">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[#AEB8B4]" />
+              <h2 className="text-sm font-medium text-[#E4E8E6]">Transaksi Terbaru</h2>
+            </div>
+            <button type="button" onClick={() => onNavigate('transactions')} className="text-[9px] text-[#68716E] hover:text-[#D0D6D3]">Lihat Semua</button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onNavigate('transactions')}
-            className="flex items-center gap-1 text-[10px] text-[#777] hover:text-white"
-          >
-            Semua
-            <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-
-        {recentTransactions.length === 0 ? (
-          <div className="py-10 text-center">
-            <Receipt className="mx-auto mb-2 h-6 w-6 text-[#444]" />
-            <p className="text-[10px] text-[#666]">
-              Belum ada transaksi.
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-left text-xs">
-              <thead className="border-b border-[#222226] text-[9px] uppercase tracking-wider text-[#555]">
-                <tr>
-                  <th className="px-4 py-2.5">Nota</th>
-                  <th className="px-2 py-2.5">Waktu</th>
-                  <th className="px-2 py-2.5">Item</th>
-                  <th className="px-2 py-2.5">Metode</th>
-                  <th className="px-4 py-2.5 text-right">Total</th>
-                  <th className="px-4 py-2.5 text-right">Laba</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {recentTransactions.slice(0, 5).map(tx => (
-                  <tr
+          {recentTransactions.length === 0 ? (
+            <div className="py-12 text-center">
+              <Receipt className="mx-auto mb-2 h-6 w-6 text-[#454E4B]" />
+              <p className="text-[10px] text-[#66706C]">Belum ada transaksi.</p>
+            </div>
+          ) : (
+            <div>
+              <div className="hidden grid-cols-[78px_minmax(0,1fr)_80px_100px_18px] gap-2 px-5 py-2.5 text-[8px] uppercase tracking-[0.12em] text-[#59615F] sm:grid">
+                <span>Waktu</span><span>Produk</span><span>Jumlah</span><span className="text-right">Total</span><span />
+              </div>
+              {recentTransactions.slice(0, 5).map((tx: any) => {
+                const firstItem = tx.items?.[0];
+                return (
+                  <button
                     key={tx.id}
-                    className="border-b border-[#1D1D20] transition-colors hover:bg-[#151517]"
+                    type="button"
+                    onClick={() => onNavigate('transactions')}
+                    className="grid w-full grid-cols-[58px_38px_minmax(0,1fr)_90px_14px] items-center gap-2 border-t border-[#1D2322] px-4 py-3 text-left transition-colors hover:bg-[#111616] sm:grid-cols-[78px_38px_minmax(0,1fr)_80px_100px_18px] sm:px-5"
                   >
-                    <td className="px-4 py-3 font-mono text-[10px] font-medium text-[#DDD]">
-                      {tx.invoice_number}
-                    </td>
-
-                    <td className="whitespace-nowrap px-2 py-3 text-[10px] text-[#666]">
-                      {formatDateTime(tx.date)}
-                    </td>
-
-                    <td className="max-w-[180px] truncate px-2 py-3 text-[10px] text-[#AAA]">
-                      {Array.isArray(tx.items) && tx.items.length > 0
-                        ? tx.items
-                            .map(
-                              i =>
-                                `${i.quantity}x ${i.product_name}`
-                            )
-                            .join(', ')
-                        : '-'}
-                    </td>
-
-                    <td className="px-2 py-3 text-[9px] font-semibold uppercase text-[#666]">
-                      {tx.payment_method}
-                    </td>
-
-                    <td className="px-4 py-3 text-right text-[10px] font-semibold text-[#DDD] tabular-nums">
-                      {formatRupiah(tx.total_amount)}
-                    </td>
-
-                    <td className="px-4 py-3 text-right text-[10px] font-semibold text-[#AAA] tabular-nums">
-                      {tx.profit >= 0 ? '+' : ''}
-                      {formatRupiah(tx.profit)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                    <span className="text-[9px] text-[#89918E]">
+                      <span className="block text-[10px] text-[#D8DEDB]">{new Date(tx.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="block text-[8px] text-[#59615F]">{new Date(tx.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
+                    </span>
+                    {transactionImage(tx) ? (
+                      <img src={transactionImage(tx)} alt="" className="h-8 w-8 rounded-md object-cover" />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[#252C2A] bg-[#151A19]"><Package className="h-3.5 w-3.5 text-[#66706C]" /></div>
+                    )}
+                    <span className="min-w-0 truncate text-[10px] text-[#C7CECB]">{firstItem?.product_name || tx.invoice_number || 'Transaksi'}</span>
+                    <span className="text-[9px] text-[#707975]">{firstItem ? `${firstItem.quantity} item` : '—'}</span>
+                    <span className="text-right text-[10px] font-medium text-[#DDE3E0] tabular-nums">{formatRupiah(tx.total_amount)}</span>
+                    <ChevronRight className="h-3.5 w-3.5 text-[#4E5654]" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </section>
+
+      {/* QUICK ACTION */}
+      <button
+        type="button"
+        onClick={onOpenQuickTx}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#24292A] bg-[#0D1010] py-3 text-[10px] font-medium text-[#AEB8B4] transition-colors hover:bg-[#121717] hover:text-[#E7ECE9] sm:hidden"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        Transaksi baru
+      </button>
 
       <style>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes drawLine {
-          from {
-            stroke-dasharray: 1;
-            stroke-dashoffset: 1;
-          }
-          to {
-            stroke-dasharray: 1;
-            stroke-dashoffset: 0;
-          }
-        }
+        @keyframes dashFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes chartDraw { from { stroke-dasharray: 1; stroke-dashoffset: 1; } to { stroke-dasharray: 1; stroke-dashoffset: 0; } }
       `}</style>
     </div>
   );
