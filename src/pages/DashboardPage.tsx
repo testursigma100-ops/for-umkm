@@ -41,7 +41,6 @@ export function DashboardPage({
     transactionsCountToday,
     topProductsToday,
     sevenDaysTrend,
-    recentTransactions,
     lowStockProducts,
   } = dashboardSummary;
 
@@ -57,11 +56,11 @@ export function DashboardPage({
 
   const chart = useMemo(() => {
     const width = 760;
-    const height = 250;
+    const height = 210;
     const left = 16;
     const right = 12;
-    const top = 18;
-    const bottom = 28;
+    const top = 14;
+    const bottom = 24;
     const innerW = width - left - right;
     const innerH = height - top - bottom;
 
@@ -91,7 +90,7 @@ export function DashboardPage({
   return (
     <div className="min-h-full pb-24 md:pb-10 text-[#E9ECEC] animate-[dashFade_.35s_ease-out]">
       {/* HEADER */}
-      <header className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <header className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[21px] font-semibold tracking-[-0.025em] text-[#F1F3F2] sm:text-2xl">
@@ -135,7 +134,7 @@ export function DashboardPage({
       {/* HERO GRID */}
       <section className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* REVENUE CHART */}
-        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-4 sm:p-5">
+        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-3.5 sm:p-4">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_10%,rgba(104,194,168,.07),transparent_32%)]" />
           <div className="relative">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -178,7 +177,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative mt-5 h-[265px] select-none touch-none sm:h-[285px]">
+            <div className="relative mt-3.5 h-[190px] select-none touch-none sm:h-[215px]">
               <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
@@ -372,7 +371,7 @@ export function DashboardPage({
       </section>
 
       {/* KPI STRIP */}
-      <section className="mt-3 grid grid-cols-1 overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] sm:grid-cols-3">
+      <section className="mt-2.5 grid grid-cols-3 overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
         {[
           { label: 'Transaksi', value: transactionsCountToday.toString(), sub: 'Berhasil', delta: profitMargin >= 0 ? `${transactionsCountToday} hari ini` : '—', icon: ShoppingBag },
           { label: 'Rata-rata Transaksi', value: formatRupiah(averageTransaction), sub: 'per transaksi', delta: transactionsCountToday ? 'Aktif' : 'Belum ada', icon: Receipt },
@@ -380,7 +379,7 @@ export function DashboardPage({
         ].map((item, index) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className={`flex items-center gap-3 px-4 py-3.5 ${index < 2 ? 'border-b border-[#1D2322] sm:border-b-0 sm:border-r' : ''}`}>
+            <div key={item.label} className={`flex items-center gap-3 px-3 py-2.5 ${index < 2 ? 'border-b border-[#1D2322] sm:border-b-0 sm:border-r' : ''}`}>
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19]">
                 <Icon className="h-4 w-4 text-[#AEB8B4]" />
               </div>
@@ -396,9 +395,9 @@ export function DashboardPage({
       </section>
 
       {/* LOWER GRID */}
-      <section className="mt-3 grid grid-cols-1 gap-3 xl:grid-cols-[1fr_1.04fr]">
+      <section className="mt-2.5 grid grid-cols-1 gap-2.5">
         {/* TOP PRODUCTS */}
-        <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-4 sm:p-5">
+        <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-3.5 sm:p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-[#D7B46A]" />
@@ -414,16 +413,16 @@ export function DashboardPage({
             </div>
           ) : (
             <div className="mt-3">
-              {topProductsToday.slice(0, 5).map((product: any, index) => {
+              {topProductsToday.slice(0, 4).map((product: any, index) => {
                 const maxQty = Math.max(...topProductsToday.map(item => Number(item.quantity || 0)), 1);
                 const percent = Math.round((Number(product.quantity || 0) / maxQty) * 100);
                 return (
-                  <div key={product.name || index} className="grid grid-cols-[28px_40px_minmax(0,1fr)_120px_30px] items-center gap-2 border-t border-[#1D2322] py-3">
+                  <div key={product.name || index} className="grid grid-cols-[24px_36px_minmax(0,1fr)_90px_24px] items-center gap-2 border-t border-[#1D2322] py-2.5 sm:grid-cols-[28px_40px_minmax(0,1fr)_120px_30px] sm:py-3">
                     <span className="text-[11px] text-[#69716F]">{String(index + 1).padStart(2, '0')}</span>
                     {productImage(product) ? (
-                      <img src={productImage(product)} alt="" className="h-9 w-9 rounded-md object-cover" />
+                      <img src={productImage(product)} alt="" className="h-8 w-8 rounded-md object-cover sm:h-9 sm:w-9" />
                     ) : (
-                      <div className="flex h-9 w-9 items-center justify-center rounded-md border border-[#252C2A] bg-[#151A19]"><Package className="h-4 w-4 text-[#68716E]" /></div>
+                      <div className="flex h-8 w-8 items-center justify-center sm:h-9 sm:w-9 rounded-md border border-[#252C2A] bg-[#151A19]"><Package className="h-4 w-4 text-[#68716E]" /></div>
                     )}
                     <div className="min-w-0">
                       <p className="truncate text-[10px] font-medium text-[#DCE1DF]">{product.name}</p>
@@ -441,56 +440,6 @@ export function DashboardPage({
             </div>
           )}
         </section>
-
-        {/* RECENT */}
-        <section className="overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
-          <div className="flex items-center justify-between border-b border-[#24292A] px-4 py-4 sm:px-5">
-            <div className="flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-[#AEB8B4]" />
-              <h2 className="text-sm font-medium text-[#E4E8E6]">Transaksi Terbaru</h2>
-            </div>
-            <button type="button" onClick={() => onNavigate('transactions')} className="text-[9px] text-[#68716E] hover:text-[#D0D6D3]">Lihat Semua</button>
-          </div>
-
-          {recentTransactions.length === 0 ? (
-            <div className="py-12 text-center">
-              <Receipt className="mx-auto mb-2 h-6 w-6 text-[#454E4B]" />
-              <p className="text-[10px] text-[#66706C]">Belum ada transaksi.</p>
-            </div>
-          ) : (
-            <div>
-              <div className="hidden grid-cols-[78px_minmax(0,1fr)_80px_100px_18px] gap-2 px-5 py-2.5 text-[8px] uppercase tracking-[0.12em] text-[#59615F] sm:grid">
-                <span>Waktu</span><span>Produk</span><span>Jumlah</span><span className="text-right">Total</span><span />
-              </div>
-              {recentTransactions.slice(0, 5).map((tx: any) => {
-                const firstItem = tx.items?.[0];
-                return (
-                  <button
-                    key={tx.id}
-                    type="button"
-                    onClick={() => onNavigate('transactions')}
-                    className="grid w-full grid-cols-[58px_38px_minmax(0,1fr)_90px_14px] items-center gap-2 border-t border-[#1D2322] px-4 py-3 text-left transition-colors hover:bg-[#111616] sm:grid-cols-[78px_38px_minmax(0,1fr)_80px_100px_18px] sm:px-5"
-                  >
-                    <span className="text-[9px] text-[#89918E]">
-                      <span className="block text-[10px] text-[#D8DEDB]">{new Date(tx.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
-                      <span className="block text-[8px] text-[#59615F]">{new Date(tx.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
-                    </span>
-                    {transactionImage(tx) ? (
-                      <img src={transactionImage(tx)} alt="" className="h-8 w-8 rounded-md object-cover" />
-                    ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-md border border-[#252C2A] bg-[#151A19]"><Package className="h-3.5 w-3.5 text-[#66706C]" /></div>
-                    )}
-                    <span className="min-w-0 truncate text-[10px] text-[#C7CECB]">{firstItem?.product_name || tx.invoice_number || 'Transaksi'}</span>
-                    <span className="text-[9px] text-[#707975]">{firstItem ? `${firstItem.quantity} item` : '—'}</span>
-                    <span className="text-right text-[10px] font-medium text-[#DDE3E0] tabular-nums">{formatRupiah(tx.total_amount)}</span>
-                    <ChevronRight className="h-3.5 w-3.5 text-[#4E5654]" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      </section>
 
       {/* QUICK ACTION */}
       <button
