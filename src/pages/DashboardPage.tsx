@@ -131,12 +131,12 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative mt-3 h-[92px] overflow-hidden select-none touch-none sm:mt-4 sm:h-[130px]">
-              <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
+            <div className="mt-4 clear-both border-t border-[#18201E] pt-3 select-none touch-none sm:mt-5 sm:pt-4">
+              <div className="relative h-[112px] overflow-hidden sm:h-[138px]"><div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
                 ))}
-              </div>
+              </div></div>
 
               <div className="pointer-events-none absolute left-0 top-0 bottom-7 flex flex-col justify-between text-[9px] text-[#5F6865]">
                 {[100, 75, 50, 25, 0].map((pct, i) => (
@@ -250,7 +250,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="mt-1 flex items-center justify-between border-t border-[#1C2221] pt-2 text-[9px] text-[#5E6764]">
+            <div className="mt-2 flex items-center justify-between border-t border-[#1C2221] pt-2 text-[9px] text-[#5E6764]">
               <span>{range === '7 Hari' ? 'Performa 7 hari terakhir' : 'Data tersedia dari ringkasan usaha'}</span>
               <span>{formatRupiah(totalTrendOmzet)} total periode</span>
             </div>
