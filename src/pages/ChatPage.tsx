@@ -5,13 +5,9 @@ import { supabase, getSupabaseConfig } from '../lib/supabase';
 import { getApiBaseUrl } from '../lib/api';
 import {
   Send,
-  BotMessageSquare,
   User,
   RefreshCw,
-  Lightbulb,
   AlertCircle,
-  Copy,
-  Check,
 } from 'lucide-react';
 
 interface MarkdownContentProps {
@@ -475,21 +471,16 @@ export function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] max-h-[820px] max-w-4xl mx-auto pb-14 md:pb-0">
+    <div className="flex flex-col h-[calc(100dvh-132px)] max-h-none max-w-4xl mx-auto pb-16 md:pb-0">
       {/* Chat Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#242428] shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#141416] border border-[#242428] flex items-center justify-center text-[#22C55E] shrink-0">
-            <BotMessageSquare className="w-4 h-4" />
+      <div className="flex items-center justify-between pb-2 border-b border-[#242428] shrink-0">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[#22C55E] shadow-[0_0_8px_rgba(34,197,94,.45)]" />
+            <h1 className="text-sm font-semibold text-[#F5F5F5]">Asisten</h1>
+            <span className="text-[8px] text-[#65706B]">BisnisKu</span>
           </div>
-          <div>
-            <h1 className="text-sm sm:text-base font-bold text-[#F5F5F5]">
-              Asisten
-            </h1>
-            <p className="text-xs text-[#8A8A91]">
-              Bantu kamu memahami dan mengelola bisnis.
-            </p>
-          </div>
+          <p className="mt-0.5 text-[9px] text-[#69716F]">Analisis bisnis berdasarkan data usahamu.</p>
         </div>
 
         <button
@@ -541,7 +532,7 @@ export function ChatPage() {
 
               {/* Message bubble: User is lighter surface (#1C1C20), Assistant is dark card (#141416) */}
               <div
-                className={`max-w-[88%] sm:max-w-[75%] rounded-xl px-4 py-3 text-xs leading-relaxed relative group ${
+                className={`max-w-[92%] sm:max-w-[78%] rounded-lg px-3 py-2.5 text-[11px] leading-relaxed relative group ${
                   isUser
                     ? 'bg-[#1C1C20] border border-[#242428] text-[#F5F5F5]'
                     : 'bg-[#141416] border border-[#242428] text-[#F5F5F5]'
@@ -553,11 +544,11 @@ export function ChatPage() {
 
                 {/* Salin / Copy button for assistant responses */}
                 {!isUser && msg.content && (
-                  <div className="pt-2 mt-2 border-t border-[#242428]/60 flex items-center justify-end select-none">
+                  <div className="pt-1.5 mt-1.5 border-t border-[#242428]/60 flex items-center justify-end select-none">
                     <button
                       type="button"
                       onClick={() => handleCopyMessage(msg.id, msg.content)}
-                      className="flex items-center gap-1 text-[11px] font-medium text-[#8A8A91] hover:text-[#22C55E] transition-colors py-0.5 px-1.5 rounded hover:bg-[#1C1C20]"
+                      className="flex items-center gap-1 text-[9px] font-medium text-[#8A8A91] hover:text-[#22C55E] transition-colors py-0.5 px-1.5 rounded hover:bg-[#1C1C20]"
                       title="Salin jawaban Asisten"
                     >
                       {isCopied ? (
@@ -582,9 +573,7 @@ export function ChatPage() {
         {/* Loading Indicator */}
         {isLoading && (
           <div className="flex items-start gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-[#141416] border border-[#242428] flex items-center justify-center text-[#22C55E] shrink-0">
-              <BotMessageSquare className="w-3.5 h-3.5" />
-            </div>
+            <div className="mt-1 h-1.5 w-1.5 rounded-full bg-[#22C55E] animate-pulse shrink-0" />
             <div className="bg-[#141416] border border-[#242428] rounded-xl px-4 py-3 text-xs text-[#8A8A91] flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-ping" />
               <span>Asisten sedang menganalisis data bisnismu...</span>
@@ -603,12 +592,9 @@ export function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested Prompts pills */}
-      <div className="pt-2 pb-1.5 shrink-0 select-none">
-        <p className="text-[10px] text-[#8A8A91] mb-1.5 flex items-center gap-1">
-          <Lightbulb className="w-3 h-3 text-[#22C55E]" />
-          <span>Pertanyaan Rekomendasi:</span>
-        </p>
+      {/* Suggested Prompts */}
+      <div className="pt-1.5 pb-1 shrink-0 select-none">
+        <p className="text-[9px] text-[#69716F] mb-1">Coba tanya</p>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {samplePrompts.map((prompt, idx) => (
             <button
@@ -616,7 +602,7 @@ export function ChatPage() {
               type="button"
               disabled={isLoading}
               onClick={() => handleSendMessage(prompt)}
-              className="px-2.5 py-1 text-[11px] font-medium text-[#8A8A91] bg-[#141416] hover:text-[#F5F5F5] hover:bg-[#1C1C20] border border-[#242428] rounded-lg whitespace-nowrap transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2.5 py-1 text-[9px] font-medium text-[#8A8A91] bg-[#141416] hover:text-[#F5F5F5] hover:bg-[#1C1C20] border border-[#242428] rounded-lg whitespace-nowrap transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {prompt}
             </button>
@@ -630,7 +616,7 @@ export function ChatPage() {
           e.preventDefault();
           handleSendMessage();
         }}
-        className="flex items-center gap-2 pt-2 border-t border-[#242428] shrink-0"
+        className="flex items-center gap-1.5 pt-1.5 border-t border-[#242428] shrink-0"
       >
         <input
           type="text"
@@ -638,12 +624,12 @@ export function ChatPage() {
           value={inputMessage}
           onChange={e => setInputMessage(e.target.value)}
           disabled={isLoading}
-          className="flex-1 px-3.5 py-2.5 text-xs bg-[#141416] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E] transition-colors"
+          className="flex-1 px-3 py-2 text-[11px] bg-[#141416] border border-[#242428] rounded-lg text-[#F5F5F5] placeholder-[#8A8A91] focus:outline-hidden focus:border-[#22C55E] transition-colors"
         />
         <button
           type="submit"
           disabled={isLoading || !inputMessage.trim()}
-          className="px-4 py-2.5 bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0 select-none"
+          className="px-3.5 py-2 bg-[#22C55E] hover:bg-[#16A34A] text-[#0B0B0C] font-semibold rounded-lg text-xs flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0 select-none"
         >
           <Send className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Kirim</span>
