@@ -56,11 +56,11 @@ export function DashboardPage({
 
   const chart = useMemo(() => {
     const width = 760;
-    const height = 170;
+    const height = 150;
     const left = 16;
     const right = 12;
     const top = 14;
-    const bottom = 20;
+    const bottom = 18;
     const innerW = width - left - right;
     const innerH = height - top - bottom;
 
@@ -88,49 +88,7 @@ export function DashboardPage({
   const transactionImage = (transaction: any) => transaction?.items?.[0]?.image_url || transaction?.items?.[0]?.image || '';
 
   return (
-    <div className="min-h-full pb-24 md:pb-10 text-[#E9ECEC] animate-[dashFade_.35s_ease-out]">
-      {/* HEADER */}
-      <header className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-[21px] font-semibold tracking-[-0.025em] text-[#F1F3F2] sm:text-2xl">
-              Selamat datang kembali, {profile.business_name ? profile.business_name : 'Ujayy'}
-            </h1>
-            <span className="text-base">👋</span>
-          </div>
-          <p className="mt-1 text-[11px] text-[#727979]">
-            Berikut ringkasan perkembangan usaha kamu hari ini.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="hidden sm:flex h-9 items-center gap-2 rounded-full border border-[#24292A] bg-[#0D1010] px-3.5 text-[11px] text-[#B7BDBB]"
-          >
-            <CalendarDays className="h-3.5 w-3.5" />
-            {new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date())}
-            <ChevronDown className="h-3 w-3 text-[#606766]" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onNavigate('chat')}
-            className="flex h-9 items-center gap-2 rounded-full border border-[#24292A] bg-[#0D1010] px-3 text-[11px] text-[#B7BDBB] transition-colors hover:bg-[#141818]"
-          >
-            <BotMessageSquare className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Asisten</span>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenQuickTx}
-            className="flex h-9 items-center gap-1.5 rounded-full bg-[#E9F1EE] px-3.5 text-[11px] font-semibold text-[#0B1110] transition-transform active:scale-[.98]"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Transaksi
-          </button>
-        </div>
-      </header>
-
+    <div className="min-h-full select-none pb-24 md:pb-10 text-[#E9ECEC] animate-[dashFade_.35s_ease-out]">
       {/* HERO GRID */}
       <section className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* REVENUE CHART */}
@@ -177,7 +135,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative mt-2.5 h-[145px] select-none touch-none sm:h-[165px]">
+            <div className="relative mt-2.5 h-[112px] select-none touch-none sm:h-[130px]">
               <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
@@ -395,14 +353,18 @@ export function DashboardPage({
       {/* LOWER GRID */}
       <section className="mt-2.5 grid grid-cols-1 gap-2.5">
         {/* TOP PRODUCTS */}
-        <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-3.5 sm:p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#D7B46A]" />
-              <h2 className="text-sm font-medium text-[#E4E8E6]">Produk Terlaris</h2>
-            </div>
-            <button type="button" onClick={() => onNavigate('products')} className="text-[9px] text-[#68716E] hover:text-[#D0D6D3]">Lihat Semua</button>
-          </div>
+        <details className="group rounded-lg border border-[#24292A] bg-[#0D1010] overflow-hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
+            <span className="flex items-center gap-2 text-sm font-medium text-[#E4E8E6]">
+              <Sparkles className="h-4 w-4 text-[#D7B46A]" /> Produk Terlaris
+            </span>
+            <span className="flex items-center gap-2">
+              <button type="button" onClick={(e) => { e.stopPropagation(); onNavigate('products'); }} className="text-[8px] text-[#68716E]">Lihat Semua</button>
+              <ChevronDown className="h-4 w-4 text-[#606766] transition-transform group-open:rotate-180" />
+            </span>
+          </summary>
+          <div className="border-t border-[#1D2322] px-3.5">
+
 
           {topProductsToday.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -437,8 +399,9 @@ export function DashboardPage({
               })}
             </div>
           )}
-        </section>
-      </section>
+
+          </div>
+        </details>
 
       {/* QUICK ACTION */}
       <button
