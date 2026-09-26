@@ -616,7 +616,7 @@ export function ChatPage() {
         </div>
       </div>}
 
-      {/* Input Form */
+      {/* Input Form */}
       <form
         onSubmit={e => {
           e.preventDefault();
