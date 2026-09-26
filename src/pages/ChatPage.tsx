@@ -519,11 +519,11 @@ export function ChatPage() {
           return (
             <div
               key={msg.id}
-              className={`flex items-start gap-2.5 ${isUser ? 'flex-row-reverse' : ''}`}
+              className={`flex items-start ${isUser ? 'justify-end' : 'justify-center'}`}
             >
               {/* Avatar */}
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${
+                className={`hidden w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-xs ${
                   isUser
                     ? 'bg-[#1C1C20] border border-[#242428] text-[#F5F5F5]'
                     : 'bg-[#141416] border border-[#242428] text-[#22C55E]'
@@ -534,13 +534,14 @@ export function ChatPage() {
 
               {/* Message bubble: User is lighter surface (#1C1C20), Assistant is dark card (#141416) */}
               <div
-                className={`max-w-[92%] sm:max-w-[78%] rounded-lg px-3 py-2.5 text-[11px] leading-relaxed relative group ${
+                className={`max-w-[94%] sm:max-w-[82%] rounded-xl px-3.5 py-3 text-[11px] leading-relaxed relative group ${
                   isUser
                     ? 'bg-[#1C1C20] border border-[#242428] text-[#F5F5F5]'
                     : 'bg-[#141416] border border-[#242428] text-[#F5F5F5]'
                 }`}
               >
                 <div className="allow-select">
+                  {!isUser && msg.id.startsWith('msg-welcome') && <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-[#174D39] bg-[#0E2B20]"><span className="h-2.5 w-2.5 rounded-full bg-[#22C55E]" /></div>}
                   <MarkdownContent content={msg.content} isUser={isUser} />
                 </div>
 
@@ -597,14 +598,14 @@ export function ChatPage() {
       {/* Suggested Prompts */}
       <div className="pt-1 pb-1 shrink-0 select-none">
         <p className="text-[9px] text-[#69716F] mb-1">Coba tanya</p>
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:overflow-x-auto pb-1 scrollbar-none">
           {samplePrompts.map((prompt, idx) => (
             <button
               key={idx}
               type="button"
               disabled={isLoading}
               onClick={() => handleSendMessage(prompt)}
-              className="px-2.5 py-1.5 text-[9px] font-medium text-[#8A8A91] bg-[#141416] hover:text-[#F5F5F5] hover:bg-[#1C1C20] border border-[#242428] rounded-lg whitespace-nowrap transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-2.5 py-1.5 text-[9px] font-medium text-[#8A8A91] bg-[#141416] hover:text-[#F5F5F5] hover:bg-[#1C1C20] border border-[#242428] rounded-lg whitespace-nowrap transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {prompt}
             </button>
