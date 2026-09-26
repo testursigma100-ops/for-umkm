@@ -475,7 +475,7 @@ export function ChatPage() {
   return (
     <div className="flex min-h-0 h-full flex-col max-w-4xl mx-auto pb-16 md:pb-0">
       {/* Chat Header */}
-      <div className="flex items-center justify-between border-b border-[#242428] pb-2.5 shrink-0">
+      <div className="sticky top-0 z-30 flex min-h-[52px] items-center justify-between border-b border-[#242428] bg-[#0A0A0B]/95 py-2.5 backdrop-blur-md shrink-0">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
