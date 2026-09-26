@@ -212,15 +212,22 @@ function MarkdownContent({ content, isUser = false }: MarkdownContentProps) {
 
 export function ChatPage() {
   const { profile, dashboardSummary, products, transactions, expenses, business } = useBusiness();
+  const chatStorageKey = `bisnisku-chat-${business?.id || profile.business_name || 'default'}`;
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(`bisnisku-chat-${business?.id || profile.business_name || 'default'}`);
+      if (saved) return JSON.parse(saved) as ChatMessage[];
+    } catch {}
+    return [
     {
       id: 'msg-welcome',
       role: 'assistant',
       content: `Halo! Saya Asisten untuk **${profile.business_name || 'usaha Anda'}**.\n\nSaya telah terhubung langsung dengan data produk, penjualan, dan pengeluaran toko Anda. Mau tahu analisis performa atau perkembangan apa hari ini?`,
       timestamp: new Date().toISOString(),
     },
-  ]);
+  ];
+  });
 
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -228,10 +235,19 @@ export function ChatPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    try {
+      localStorage.setItem(chatStorageKey, JSON.stringify(messages.slice(-40)));
+    } catch {}
+  }, [messages, chatStorageKey]);
+
+  useEffect(() => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, isLoading]);
 
   const samplePrompts = [
@@ -496,6 +512,9 @@ export function ChatPage() {
                 timestamp: new Date().toISOString(),
               },
             ]);
+            try {
+              localStorage.removeItem(chatStorageKey);
+            } catch {}
             setChatError(null);
           }}
           className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#141416] rounded-lg transition-colors text-xs flex items-center gap-1 select-none"
@@ -507,7 +526,7 @@ export function ChatPage() {
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 min-h-0 overflow-y-auto py-2.5 space-y-2.5 pr-1 overscroll-contain">
+      <div ref={messagesScrollRef} className="flex-1 min-h-0 overflow-y-auto py-2.5 space-y-2.5 pr-1 overscroll-contain">
         {messages.map(msg => {
           if (messages.length > 1 && msg.id.startsWith('msg-welcome')) return null;
           const isUser = msg.role === 'user';
