@@ -473,14 +473,14 @@ export function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-132px)] max-h-none max-w-4xl mx-auto pb-16 md:pb-0">
+    <div className="flex min-h-[calc(100dvh-132px)] h-[calc(100dvh-132px)] flex-col max-w-4xl mx-auto pb-16 md:pb-0">
       {/* Chat Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#242428] shrink-0">
+      <div className="flex items-center justify-between border-b border-[#242428] pb-2.5 shrink-0">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-[#22C55E] shadow-[0_0_8px_rgba(34,197,94,.45)]" />
-            <h1 className="text-sm font-semibold text-[#F5F5F5]">Asisten</h1>
-            <span className="text-[8px] text-[#65706B]">BisnisKu</span>
+            <span className="h-2 w-2 rounded-full bg-[#22C55E]" />
+            <h1 className="text-sm font-semibold text-[#F5F5F5]">Asisten AI</h1>
+            <span className="rounded bg-[#123B2A] px-1.5 py-0.5 text-[7px] font-medium text-[#69D3A7]">Beta</span>
           </div>
           <p className="mt-0.5 text-[9px] text-[#69716F]">Analisis bisnis berdasarkan data usahamu.</p>
         </div>
@@ -507,7 +507,7 @@ export function ChatPage() {
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-3.5 pr-1">
+      <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-3 pr-1">
         {messages.map(msg => {
           const isUser = msg.role === 'user';
           const isCopied = copiedId === msg.id;
@@ -595,7 +595,7 @@ export function ChatPage() {
       </div>
 
       {/* Suggested Prompts */}
-      <div className="pt-1.5 pb-1 shrink-0 select-none">
+      <div className="pt-1 pb-1 shrink-0 select-none">
         <p className="text-[9px] text-[#69716F] mb-1">Coba tanya</p>
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {samplePrompts.map((prompt, idx) => (
@@ -604,7 +604,7 @@ export function ChatPage() {
               type="button"
               disabled={isLoading}
               onClick={() => handleSendMessage(prompt)}
-              className="px-2.5 py-1 text-[9px] font-medium text-[#8A8A91] bg-[#141416] hover:text-[#F5F5F5] hover:bg-[#1C1C20] border border-[#242428] rounded-lg whitespace-nowrap transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-2.5 py-1.5 text-[9px] font-medium text-[#8A8A91] bg-[#141416] hover:text-[#F5F5F5] hover:bg-[#1C1C20] border border-[#242428] rounded-lg whitespace-nowrap transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {prompt}
             </button>
@@ -618,7 +618,7 @@ export function ChatPage() {
           e.preventDefault();
           handleSendMessage();
         }}
-        className="flex items-center gap-1.5 pt-1.5 border-t border-[#242428] shrink-0"
+        className="flex items-center gap-1.5 pt-2 border-t border-[#242428] shrink-0"
       >
         <input
           type="text"
