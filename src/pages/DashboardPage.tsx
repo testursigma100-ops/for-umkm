@@ -52,7 +52,7 @@ export function DashboardPage({
       const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
       const dayTxs = transactions.filter(t => (t.date || '').split('T')[0] === dateString);
-      const dayExps = expenses.filter(e => e.date === dateString);
+      const dayExps = expenses.filter(e => (e.date || e.created_at || '').split('T')[0] === dateString);
       const omzet = dayTxs.reduce((sum, t) => sum + Number(t.total_amount || 0), 0);
       const hpp = dayTxs.reduce((sum, t) => sum + Number(t.total_hpp || 0), 0);
       const expense = dayExps.reduce((sum, e) => sum + Number(e.amount || 0), 0);
