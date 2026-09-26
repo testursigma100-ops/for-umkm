@@ -56,11 +56,11 @@ export function DashboardPage({
 
   const chart = useMemo(() => {
     const width = 760;
-    const height = 210;
+    const height = 170;
     const left = 16;
     const right = 12;
     const top = 14;
-    const bottom = 24;
+    const bottom = 20;
     const innerW = width - left - right;
     const innerH = height - top - bottom;
 
@@ -134,7 +134,7 @@ export function DashboardPage({
       {/* HERO GRID */}
       <section className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* REVENUE CHART */}
-        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-3.5 sm:p-4">
+        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-3 sm:p-3.5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_10%,rgba(104,194,168,.07),transparent_32%)]" />
           <div className="relative">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -177,7 +177,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative mt-3.5 h-[190px] select-none touch-none sm:h-[215px]">
+            <div className="relative mt-2.5 h-[145px] select-none touch-none sm:h-[165px]">
               <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
@@ -305,7 +305,7 @@ export function DashboardPage({
 
         {/* RIGHT SUMMARY */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-4">
+          <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-3.5">
             <div className="mb-2 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CircleDollarSign className="h-4 w-4 text-[#A7B2AE]" />
@@ -440,12 +440,13 @@ export function DashboardPage({
             </div>
           )}
         </section>
+      </section>
 
       {/* QUICK ACTION */}
       <button
         type="button"
         onClick={onOpenQuickTx}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#24292A] bg-[#0D1010] py-3 text-[10px] font-medium text-[#AEB8B4] transition-colors hover:bg-[#121717] hover:text-[#E7ECE9] sm:hidden"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#24292A] bg-[#0D1010] py-3 text-[10px] font-medium text-[#AEB8B4] transition-colors hover:bg-[#121717] hover:text-[#E7ECE9] sm:hidden"
       >
         <Plus className="h-3.5 w-3.5" />
         Transaksi baru
