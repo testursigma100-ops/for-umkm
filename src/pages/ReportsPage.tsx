@@ -193,14 +193,14 @@ export function ReportsPage() {
   };
 
   return (
-    <div className="space-y-5 pb-24 md:pb-8">
+    <div className="space-y-3 pb-24 md:pb-8">
       {/* Header and Period Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-0.5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
             Laporan
           </h1>
-          <p className="text-xs text-[#8A8A8A] mt-0.5">
+          <p className="text-[10px] text-[#8A8A8A] mt-0.5">
             Rekap omzet, HPP, laba bersih, dan pengeluaran {profile.business_name || 'usaha'}.
           </p>
         </div>
@@ -274,7 +274,7 @@ export function ReportsPage() {
       {/* Main Report Content (Exportable Container) */}
       <div ref={reportContainerRef} className="space-y-4">
         {/* Core Financial KPI Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
           <StatCard
             title="Total Omzet"
             value={formatRupiah(reportData.totalOmzet)}
@@ -310,8 +310,8 @@ export function ReportsPage() {
         </div>
 
         {/* Laba Rugi Operasional */}
-        <div className="p-4 sm:p-5 rounded-xl bg-[#151515] border border-[#252525]">
-          <h3 className="text-sm font-semibold text-[#F5F5F5] mb-3">
+        <div className="p-3.5 sm:p-4 rounded-lg bg-[#151515] border border-[#252525]">
+          <h3 className="text-sm font-semibold text-[#F5F5F5] mb-2.5">
             Ringkasan Laba Rugi ({reportData.periodLabel})
           </h3>
 
