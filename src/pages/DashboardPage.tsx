@@ -118,7 +118,7 @@ export function DashboardPage({
                   <button
                     key={item}
                     type="button"
-                    onClick={() => setRange(item)}
+                    onClick={() => { setRange(item); setHoverIndex(null); }}
                     className={`shrink-0 rounded-md px-2 py-1.5 text-[8px] transition-colors ${
                       range === item
                         ? 'bg-[#1B2020] text-[#E6ECE9] shadow-sm'
@@ -132,7 +132,7 @@ export function DashboardPage({
             </div>
 
             <div className="mt-4 clear-both border-t border-[#18201E] pt-3 select-none touch-none sm:mt-5 sm:pt-4">
-              <div className="relative h-[112px] overflow-hidden sm:h-[138px]"><div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
+              <div className="relative h-[96px] overflow-hidden sm:h-[116px]"><div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
                 ))}
@@ -147,38 +147,8 @@ export function DashboardPage({
               <svg
                 viewBox={`0 0 ${chart.width} ${chart.height}`}
                 preserveAspectRatio="none"
-                className="absolute inset-x-7 top-0 h-[calc(100%-28px)] w-[calc(100%-28px)] overflow-hidden"
+                className="absolute inset-x-7 top-0 h-[calc(100%-24px)] w-[calc(100%-28px)] overflow-hidden"
                 onMouseLeave={() => setHoverIndex(null)}
-                onMouseMove={event => {
-                  if (!chart.points.length) return;
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  const x = ((event.clientX - rect.left) / rect.width) * chart.width;
-                  let nearest = 0;
-                  let distance = Infinity;
-                  chart.points.forEach((point, index) => {
-                    const d = Math.abs(point.x - x);
-                    if (d < distance) {
-                      distance = d;
-                      nearest = index;
-                    }
-                  });
-                  setHoverIndex(nearest);
-                }}
-                onTouchMove={event => {
-                  if (!chart.points.length) return;
-                  const rect = event.currentTarget.getBoundingClientRect();
-                  const x = ((event.touches[0].clientX - rect.left) / rect.width) * chart.width;
-                  let nearest = 0;
-                  let distance = Infinity;
-                  chart.points.forEach((point, index) => {
-                    const d = Math.abs(point.x - x);
-                    if (d < distance) {
-                      distance = d;
-                      nearest = index;
-                    }
-                  });
-                  setHoverIndex(nearest);
-                }}
               >
                 <defs>
                   <linearGradient id="bisniskuChartFill" x1="0" y1="0" x2="0" y2="1">
@@ -209,43 +179,12 @@ export function DashboardPage({
                     strokeWidth={hoverIndex === index ? 2 : 1.3}
                   />
                 ))}
-                {activePoint && hoverIndex !== null && (
-                  <>
-                    <line
-                      x1={activePoint.x}
-                      x2={activePoint.x}
-                      y1={8}
-                      y2={chart.height - chart.bottom}
-                      stroke="#7E8985"
-                      strokeDasharray="3 4"
-                      strokeWidth="1"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                    <circle
-                      cx={activePoint.x}
-                      cy={activePoint.y}
-                      r="7"
-                      fill="#9DD7C5"
-                      fillOpacity="0.13"
-                    />
-                  </>
-                )}
+
               </svg>
 
-              {activePoint && hoverIndex !== null && (
-                <div
-                  className="pointer-events-none absolute z-10 max-w-[calc(100%-16px)] w-[132px] -translate-x-1/2 rounded-md border border-[#2A3230] bg-[#0B0F0F]/95 px-3 py-2 shadow-xl backdrop-blur"
-                  style={{
-                    left: `clamp(66px, calc(28px + ${((activePoint.x / chart.width) * 100)}% - 14px), calc(100% - 66px))`,
-                    top: Math.min(62, Math.max(4, (activePoint.y / chart.height) * 100 - 15)) + '%',
-                  }}
-                >
-                  <p className="text-[9px] text-[#68716E]">{activePoint.label}</p>
-                  <p className="mt-0.5 text-xs font-semibold text-[#EFF4F2]">{formatRupiah(activePoint.omzet)}</p>
-                </div>
-              )}
 
-              <div className="pointer-events-none absolute inset-x-7 bottom-0 flex justify-between text-[9px] text-[#59615F]">
+
+              <div className="pointer-events-none absolute inset-x-7 bottom-0 flex justify-between text-[8px] text-[#59615F]">
                 {sevenDaysTrend.map(day => <span key={day.date}>{day.label}</span>)}
               </div>
               </div>
