@@ -91,7 +91,7 @@ export function DashboardPage({
         <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-2.5 sm:p-3.5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_10%,rgba(104,194,168,.07),transparent_32%)]" />
           <div className="relative">
-            <div className="grid grid-cols-[minmax(0,1fr)_128px] items-start gap-2 sm:flex sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-[11px] text-[#9DA5A2]">
                   <TrendingUp className="h-4 w-4 text-[#9ACFBE]" />
@@ -113,13 +113,13 @@ export function DashboardPage({
                 </div>
               </div>
 
-              <div className="ml-auto inline-flex self-start rounded-lg border border-[#282D2D] bg-[#101313] p-0.5">
+              <div className="inline-flex max-w-full self-start overflow-x-auto rounded-lg border border-[#282D2D] bg-[#101313] p-0.5 scrollbar-none sm:ml-auto">
                 {(['Hari Ini', '7 Hari', '30 Hari', 'Custom'] as Range[]).map(item => (
                   <button
                     key={item}
                     type="button"
                     onClick={() => setRange(item)}
-                    className={`rounded-md px-2.5 py-1.5 text-[9px] transition-colors ${
+                    className={`shrink-0 rounded-md px-2 py-1.5 text-[8px] transition-colors ${
                       range === item
                         ? 'bg-[#1B2020] text-[#E6ECE9] shadow-sm'
                         : 'text-[#727A78] hover:text-[#B9C0BD]'
@@ -131,7 +131,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative col-span-2 mt-1.5 h-[84px] select-none touch-none sm:col-span-1 sm:h-[130px]">
+            <div className="relative mt-1.5 h-[84px] select-none touch-none sm:h-[130px]">
               <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
@@ -236,7 +236,7 @@ export function DashboardPage({
                 <div
                   className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 rounded-md border border-[#2A3230] bg-[#0B0F0F]/95 px-3 py-2 shadow-xl backdrop-blur"
                   style={{
-                    left: `calc(28px + ${((activePoint.x / chart.width) * 100)}% - 14px)`,
+                    left: `clamp(66px, calc(28px + ${((activePoint.x / chart.width) * 100)}% - 14px), calc(100% - 66px))`,
                     top: Math.max(4, (activePoint.y / chart.height) * 100 - 15) + '%',
                   }}
                 >
@@ -259,36 +259,37 @@ export function DashboardPage({
 
         {/* RIGHT SUMMARY */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-3.5">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+          <details className="group overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 select-none [&::-webkit-details-marker]:hidden">
+              <span className="flex items-center gap-2 text-sm font-medium text-[#E4E8E6]">
                 <CircleDollarSign className="h-4 w-4 text-[#A7B2AE]" />
-                <h2 className="text-sm font-medium text-[#E4E8E6]">Ringkasan Keuangan</h2>
-              </div>
+                Ringkasan Keuangan
+              </span>
+              <ChevronDown className="h-4 w-4 text-[#606766] transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="border-t border-[#1D2322] px-3.5">
+              {[
+                { label: 'Total Omzet', value: omzetToday, meta: `${profitMargin.toFixed(1)}% margin`, icon: CircleDollarSign },
+                { label: 'Keuntungan', value: estimatedProfitToday, meta: `${profitMargin.toFixed(1)}% dari omzet`, icon: TrendingUp },
+                { label: 'HPP', value: hppToday, meta: `${hppRatio.toFixed(1)}% dari omzet`, icon: Package },
+                { label: 'Pengeluaran', value: expensesToday, meta: `${expenseRatio.toFixed(1)}% dari omzet`, icon: Receipt },
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className={`flex items-center gap-3 py-2.5 ${index < 3 ? 'border-b border-[#1D2322]' : ''}`}>
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19]">
+                      <Icon className="h-3 w-3 text-[#AAB3B0]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[9px] text-[#69716F]">{item.label}</p>
+                      <p className="mt-0.5 text-[12px] font-medium text-[#E8ECEA] tabular-nums">{formatRupiah(item.value)}</p>
+                    </div>
+                    <span className="text-[9px] font-medium text-[#66C8A6]">{item.meta}</span>
+                  </div>
+                );
+              })}
             </div>
-            {[
-              { label: 'Total Omzet', value: omzetToday, meta: `${profitMargin.toFixed(1)}% margin`, icon: CircleDollarSign },
-              { label: 'Keuntungan', value: estimatedProfitToday, meta: `${profitMargin.toFixed(1)}% dari omzet`, icon: TrendingUp },
-              { label: 'HPP', value: hppToday, meta: `${hppRatio.toFixed(1)}% dari omzet`, icon: Package },
-              { label: 'Pengeluaran', value: expensesToday, meta: `${expenseRatio.toFixed(1)}% dari omzet`, icon: Receipt },
-            ].map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.label} className={`flex items-center gap-3 py-3 ${index < 3 ? 'border-b border-[#1D2322]' : ''}`}>
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19]">
-                    <Icon className="h-3.5 w-3.5 text-[#AAB3B0]" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[9px] text-[#69716F]">{item.label}</p>
-                    <p className="mt-0.5 text-[13px] font-medium text-[#E8ECEA] tabular-nums">{formatRupiah(item.value)}</p>
-                  </div>
-                  <span className="text-[9px] font-medium text-[#66C8A6]">{item.meta}</span>
-                  <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#4E5654]" />
-                </div>
-              );
-            })}
-          </section>
-
+          </details>
           <section className="rounded-lg border border-[#24292A] bg-[#0D1010] p-4">
             <div className="mb-1 flex items-center justify-between">
               <div className="flex items-center gap-2">
