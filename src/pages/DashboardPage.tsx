@@ -402,6 +402,7 @@ export function DashboardPage({
 
           </div>
         </details>
+      </section>
 
       {/* QUICK ACTION */}
       <button
