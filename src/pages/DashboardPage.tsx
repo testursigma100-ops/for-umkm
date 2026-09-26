@@ -136,7 +136,7 @@ export function DashboardPage({
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
                 ))}
-              </div></div>
+              </div>
 
               <div className="pointer-events-none absolute left-0 top-0 bottom-7 flex flex-col justify-between text-[9px] text-[#5F6865]">
                 {[100, 75, 50, 25, 0].map((pct, i) => (
@@ -247,6 +247,7 @@ export function DashboardPage({
 
               <div className="pointer-events-none absolute inset-x-7 bottom-0 flex justify-between text-[9px] text-[#59615F]">
                 {sevenDaysTrend.map(day => <span key={day.date}>{day.label}</span>)}
+              </div>
               </div>
             </div>
 
