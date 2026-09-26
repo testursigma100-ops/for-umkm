@@ -355,8 +355,8 @@ export function DashboardPage({
         {/* TOP PRODUCTS */}
         <details className="group rounded-lg border border-[#24292A] bg-[#0D1010] overflow-hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2 text-sm font-medium text-[#E4E8E6]">
-              <Sparkles className="h-4 w-4 text-[#D7B46A]" /> Produk Terlaris
+            <span className="flex items-center gap-2 text-sm font-medium text-[#E4E8E6] select-none">
+              Produk Terlaris
             </span>
             <span className="flex items-center gap-2">
               <button type="button" onClick={(e) => { e.stopPropagation(); onNavigate('products'); }} className="text-[8px] text-[#68716E]">Lihat Semua</button>
