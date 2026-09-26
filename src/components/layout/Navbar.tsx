@@ -32,7 +32,7 @@ export function Navbar({
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 bg-[#0B0B0C]/95 backdrop-blur-md border-b border-[#242428] px-3 lg:px-8 py-2">
+    <header className="sticky top-0 z-30 bg-[#0B0B0C]/95 backdrop-blur-md border-b border-[#242428] px-3 lg:px-8 py-1.5">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Brand: [Logo] BisnisKu */}
         <div className="flex items-center">
@@ -49,9 +49,9 @@ export function Navbar({
             aria-label="BisnisKu"
           >
             <div className="text-[#22C55E] flex items-center justify-center">
-              <Logo size={23} />
+              <Logo size={20} />
             </div>
-            <span className="text-[15px] font-semibold tracking-tight text-[#F5F5F5]">
+            <span className="text-[14px] font-semibold tracking-tight text-[#F5F5F5]">
               BisnisKu
             </span>
           </button>
@@ -79,7 +79,7 @@ export function Navbar({
                 <button
                   type="button"
                   onClick={onOpenQuickTxModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98] select-none"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98] select-none"
                   title="Buka Kasir / Catat Penjualan"
                 >
                   <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -95,7 +95,7 @@ export function Navbar({
                   className="flex items-center gap-1.5 p-1.5 text-xs text-[#F5F5F5] bg-[#141416] hover:bg-[#1C1C20] border border-[#242428] rounded-lg transition-colors select-none"
                   aria-label="Menu Pengguna"
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0">
                     <User className="w-3.5 h-3.5" />
                   </div>
                   <span className="hidden md:inline font-medium max-w-[100px] truncate text-[11px] text-[#F5F5F5]">
