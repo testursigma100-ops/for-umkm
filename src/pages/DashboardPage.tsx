@@ -373,22 +373,20 @@ export function DashboardPage({
       {/* KPI STRIP */}
       <section className="mt-2.5 grid grid-cols-3 overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
         {[
-          { label: 'Transaksi', value: transactionsCountToday.toString(), sub: 'Berhasil', delta: profitMargin >= 0 ? `${transactionsCountToday} hari ini` : '—', icon: ShoppingBag },
-          { label: 'Rata-rata Transaksi', value: formatRupiah(averageTransaction), sub: 'per transaksi', delta: transactionsCountToday ? 'Aktif' : 'Belum ada', icon: Receipt },
-          { label: 'Produk Terjual', value: topProductsToday.reduce((sum, item) => sum + Number(item.quantity || 0), 0).toString(), sub: 'total item', delta: topProductsToday.length ? `${topProductsToday.length} produk` : '—', icon: Package },
+          { label: 'Transaksi', value: transactionsCountToday.toString(), icon: ShoppingBag },
+          { label: 'Rata-rata', value: formatRupiah(averageTransaction), icon: Receipt },
+          { label: 'Item Terjual', value: topProductsToday.reduce((sum, item) => sum + Number(item.quantity || 0), 0).toString(), icon: Package },
         ].map((item, index) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className={`flex items-center gap-3 px-3 py-2.5 ${index < 2 ? 'border-b border-[#1D2322] sm:border-b-0 sm:border-r' : ''}`}>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19]">
-                <Icon className="h-4 w-4 text-[#AEB8B4]" />
+            <div key={item.label} className={`flex min-w-0 items-center gap-2 px-2.5 py-2.5 sm:gap-3 sm:px-3.5 ${index < 2 ? 'border-r border-[#1D2322]' : ''}`}>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#282F2D] bg-[#151A19] sm:h-9 sm:w-9">
+                <Icon className="h-3.5 w-3.5 text-[#AEB8B4] sm:h-4 sm:w-4" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[9px] text-[#68716E]">{item.label}</p>
-                <p className="mt-0.5 text-[13px] font-medium text-[#E7ECE9] tabular-nums">{item.value}</p>
-                <p className="text-[9px] text-[#5E6764]">{item.sub}</p>
+              <div className="min-w-0">
+                <p className="truncate text-[8px] text-[#68716E] sm:text-[9px]">{item.label}</p>
+                <p className="mt-0.5 truncate text-[12px] font-medium text-[#E7ECE9] tabular-nums sm:text-[13px]">{item.value}</p>
               </div>
-              <span className="text-[9px] font-medium text-[#67C7A5]">{item.delta}</span>
             </div>
           );
         })}
