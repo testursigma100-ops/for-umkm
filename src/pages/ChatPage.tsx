@@ -543,10 +543,13 @@ export function ChatPage() {
                 <div className="allow-select">
                   {!isUser && msg.id.startsWith('msg-welcome') && <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full border border-[#174D39] bg-[#0E2B20]"><span className="h-2.5 w-2.5 rounded-full bg-[#22C55E]" /></div>}
                   <MarkdownContent content={msg.content} isUser={isUser} />
+                  {!isUser && msg.id.startsWith('msg-welcome') && <div className="mt-3 grid grid-cols-2 gap-1.5">
+                    {samplePrompts.map((prompt, idx) => <button key={idx} type="button" disabled={isLoading} onClick={() => handleSendMessage(prompt)} className="rounded-lg border border-[#242428] bg-[#101214] px-2.5 py-2 text-left text-[9px] font-medium text-[#9AA29F] transition-colors hover:border-[#315448] hover:text-[#F5F5F5] disabled:opacity-50">{prompt}</button>)}
+                  </div>}
                 </div>
 
                 {/* Salin / Copy button for assistant responses */}
-                {!isUser && msg.content && (
+                {!isUser && msg.content && !msg.id.startsWith('msg-welcome') && (
                   <div className="pt-1.5 mt-1.5 border-t border-[#242428]/60 flex items-center justify-end select-none">
                     <button
                       type="button"
@@ -596,7 +599,7 @@ export function ChatPage() {
       </div>
 
       {/* Suggested Prompts */}
-      <div className="pt-1 pb-1 shrink-0 select-none">
+      {messages.length > 1 && <div className="pt-1 pb-1 shrink-0 select-none">
         <p className="text-[9px] text-[#69716F] mb-1">Coba tanya</p>
         <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:overflow-x-auto pb-1 scrollbar-none">
           {samplePrompts.map((prompt, idx) => (
@@ -611,9 +614,9 @@ export function ChatPage() {
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
-      {/* Input Form */}
+      {/* Input Form */
       <form
         onSubmit={e => {
           e.preventDefault();
