@@ -27,7 +27,7 @@ export function DashboardPage({
   onNavigate,
   onOpenQuickTx,
 }: DashboardPageProps) {
-  const { profile, dashboardSummary } = useBusiness();
+  const { profile, dashboardSummary, transactions, expenses } = useBusiness();
   const [range, setRange] = useState<Range>('7 Hari');
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
@@ -41,8 +41,38 @@ export function DashboardPage({
     lowStockProducts,
   } = dashboardSummary;
 
-  const maxTrendOmzet = Math.max(...sevenDaysTrend.map(d => d.omzet), 100000);
-  const totalTrendOmzet = sevenDaysTrend.reduce((sum, day) => sum + day.omzet, 0);
+  const rangeTrend = useMemo(() => {
+    const days = range === 'Hari Ini' ? 1 : range === '30 Hari' ? 30 : 7;
+    const result: { date: string; label: string; omzet: number; profit: number; expenses: number }[] = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const dateString = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      const dayTxs = transactions.filter(t => (t.date || '').split('T')[0] === dateString);
+      const dayExps = expenses.filter(e => e.date === dateString);
+      const omzet = dayTxs.reduce((sum, t) => sum + Number(t.total_amount || 0), 0);
+      const hpp = dayTxs.reduce((sum, t) => sum + Number(t.total_hpp || 0), 0);
+      const expense = dayExps.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+
+      result.push({
+        date: dateString,
+        label: days === 1 ? 'Hari Ini' : days === 7
+          ? (i === 0 ? 'Hari Ini' : d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' }))
+          : (i === 0 ? 'Hari Ini' : d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })),
+        omzet,
+        profit: omzet - hpp - expense,
+        expenses: expense,
+      });
+    }
+    return result;
+  }, [range, transactions, expenses]);
+
+  const chartData = rangeTrend;
+  const maxTrendOmzet = Math.max(...chartData.map(d => d.omzet), 100000);
+  const totalTrendOmzet = chartData.reduce((sum, day) => sum + day.omzet, 0);
   const averageTransaction = transactionsCountToday > 0
     ? omzetToday / transactionsCountToday
     : 0;
@@ -61,10 +91,10 @@ export function DashboardPage({
     const innerW = width - left - right;
     const innerH = height - top - bottom;
 
-    const points = sevenDaysTrend.map((day, index) => {
-      const x = sevenDaysTrend.length <= 1
+    const points = chartData.map((day, index) => {
+      const x = chartData.length <= 1
         ? width / 2
-        : left + (index / (sevenDaysTrend.length - 1)) * innerW;
+        : left + (index / (chartData.length - 1)) * innerW;
       const y = top + innerH - (day.omzet / maxTrendOmzet) * innerH;
       return { ...day, x, y };
     });
@@ -77,7 +107,7 @@ export function DashboardPage({
       : '';
 
     return { width, height, left, right, top, bottom, points, line, area };
-  }, [sevenDaysTrend, maxTrendOmzet]);
+  }, [chartData, maxTrendOmzet]);
 
   const activePoint = hoverIndex !== null ? chart.points[hoverIndex] : chart.points[chart.points.length - 1];
 
@@ -185,13 +215,13 @@ export function DashboardPage({
 
 
               <div className="pointer-events-none absolute inset-x-7 bottom-0 flex justify-between text-[8px] text-[#59615F]">
-                {sevenDaysTrend.map(day => <span key={day.date}>{day.label}</span>)}
+                {chartData.map(day => <span key={day.date}>{day.label}</span>)}
               </div>
               </div>
             </div>
 
             <div className="mt-2 flex items-center justify-between border-t border-[#1C2221] pt-2 text-[9px] text-[#5E6764]">
-              <span>{range === '7 Hari' ? 'Performa 7 hari terakhir' : 'Data tersedia dari ringkasan usaha'}</span>
+              <span>{range === 'Hari Ini' ? 'Performa hari ini' : range === '30 Hari' ? 'Performa 30 hari terakhir' : 'Performa 7 hari terakhir'}</span>
               <span>{formatRupiah(totalTrendOmzet)} total periode</span>
             </div>
           </div>
@@ -199,7 +229,7 @@ export function DashboardPage({
 
         {/* RIGHT SUMMARY */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <details className="group overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
+          <details open className="group overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010]">
             <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 select-none [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2 text-sm font-medium text-[#E4E8E6]">
                 <CircleDollarSign className="h-4 w-4 text-[#A7B2AE]" />
@@ -290,7 +320,7 @@ export function DashboardPage({
       {/* LOWER GRID */}
       <section className="mt-2.5 grid grid-cols-1 gap-2.5">
         {/* TOP PRODUCTS */}
-        <details className="group rounded-lg border border-[#24292A] bg-[#0D1010] overflow-hidden">
+        <details open className="group rounded-lg border border-[#24292A] bg-[#0D1010] overflow-hidden">
           <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-3 [&::-webkit-details-marker]:hidden">
             <span className="flex items-center gap-2 text-sm font-medium text-[#E4E8E6] select-none">
               Produk Terlaris
