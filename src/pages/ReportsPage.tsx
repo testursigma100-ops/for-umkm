@@ -193,21 +193,21 @@ export function ReportsPage() {
   };
 
   return (
-    <div className="space-y-3 pb-24 md:pb-8">
+    <div className="space-y-2.5 pb-24 md:pb-8">
       {/* Header and Period Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-0.5">
+      <div className="flex flex-col gap-2 pt-0.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight text-[#F5F5F5]">
             Laporan
           </h1>
-          <p className="text-[10px] text-[#8A8A8A] mt-0.5">
+          <p className="text-[9px] text-[#8A8A8A] mt-0.5">
             Rekap omzet, HPP, laba bersih, dan pengeluaran {profile.business_name || 'usaha'}.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 select-none">
+        <div className="flex max-w-full items-center gap-1.5 overflow-x-auto select-none scrollbar-none">
           {/* Period Selector Tabs */}
-          <div className="p-1 bg-[#151515] border border-[#252525] rounded-lg flex items-center">
+          <div className="shrink-0 p-0.5 bg-[#151515] border border-[#252525] rounded-lg flex items-center">
             <button
               type="button"
               onClick={() => setPeriod('daily')}
@@ -248,7 +248,7 @@ export function ReportsPage() {
             type="button"
             disabled={isExporting}
             onClick={handleDownloadReportImage}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-[#F5F5F5] bg-[#151515] hover:bg-[#1F1F1F] border border-[#252525] rounded-lg transition-colors disabled:opacity-50"
+            className="flex shrink-0 items-center gap-1 px-2.5 py-1.5 text-[10px] font-medium text-[#F5F5F5] bg-[#151515] hover:bg-[#1F1F1F] border border-[#252525] rounded-lg transition-colors disabled:opacity-50"
             title="Simpan Laporan sebagai Gambar"
           >
             {isExporting ? (
@@ -262,7 +262,7 @@ export function ReportsPage() {
           <button
             type="button"
             onClick={handleShareWhatsApp}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98]"
+            className="flex shrink-0 items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold text-[#0B0B0C] bg-[#22C55E] hover:bg-[#16A34A] rounded-lg transition-colors active:scale-[0.98]"
             title="Bagikan Ringkasan ke WhatsApp"
           >
             <Share2 className="w-3.5 h-3.5" />
@@ -272,7 +272,7 @@ export function ReportsPage() {
       </div>
 
       {/* Main Report Content (Exportable Container) */}
-      <div ref={reportContainerRef} className="space-y-4">
+      <div ref={reportContainerRef} className="space-y-2.5">
         {/* Core Financial KPI Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
           <StatCard
