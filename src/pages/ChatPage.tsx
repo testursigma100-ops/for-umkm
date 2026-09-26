@@ -8,7 +8,6 @@ import {
   User,
   RefreshCw,
   AlertCircle,
-  BotMessageSquare,
   Copy,
   Check,
 } from 'lucide-react';
@@ -530,7 +529,7 @@ export function ChatPage() {
                     : 'bg-[#141416] border border-[#242428] text-[#22C55E]'
                 }`}
               >
-                {isUser ? <User className="w-3.5 h-3.5" /> : <BotMessageSquare className="w-3.5 h-3.5" />}
+                {isUser ? <User className="w-3.5 h-3.5" /> : <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E]" />}
               </div>
 
               {/* Message bubble: User is lighter surface (#1C1C20), Assistant is dark card (#141416) */}
