@@ -509,6 +509,7 @@ export function ChatPage() {
       {/* Messages Scroll Area */}
       <div className="flex-1 min-h-0 overflow-y-auto py-2.5 space-y-2.5 pr-1 overscroll-contain">
         {messages.map(msg => {
+          if (messages.length > 1 && msg.id.startsWith('msg-welcome')) return null;
           const isUser = msg.role === 'user';
           const isCopied = copiedId === msg.id;
 
