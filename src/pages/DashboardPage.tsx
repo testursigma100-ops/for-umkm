@@ -92,32 +92,32 @@ export function DashboardPage({
       {/* HERO GRID */}
       <section className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
         {/* REVENUE CHART */}
-        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-3 sm:p-3.5">
+        <div className="relative overflow-hidden rounded-lg border border-[#24292A] bg-[#0D1010] p-2.5 sm:p-3.5">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_72%_10%,rgba(104,194,168,.07),transparent_32%)]" />
           <div className="relative">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="grid grid-cols-[minmax(0,1fr)_128px] items-start gap-2 sm:flex sm:items-start sm:justify-between">
               <div>
                 <div className="flex items-center gap-2 text-[11px] text-[#9DA5A2]">
                   <TrendingUp className="h-4 w-4 text-[#9ACFBE]" />
                   <span>Total Omzet</span>
                 </div>
-                <div className="mt-2 flex flex-wrap items-end gap-x-3 gap-y-1">
-                  <span className="text-[34px] font-semibold leading-none tracking-[-0.035em] text-[#F3F5F4] tabular-nums sm:text-[39px]">
+                <div className="mt-1.5 flex flex-wrap items-end gap-x-2 gap-y-1">
+                  <span className="text-[27px] font-semibold leading-none tracking-[-0.035em] text-[#F3F5F4] tabular-nums sm:text-[39px]">
                     {formatRupiah(omzetToday)}
                   </span>
-                  <span className="mb-0.5 inline-flex items-center gap-1 text-[12px] font-medium text-[#6ED1AE]">
+                  <span className="mb-0.5 inline-flex items-center gap-0.5 text-[9px] font-medium text-[#6ED1AE]">
                     <ArrowUpRight className="h-3.5 w-3.5" />
                     {profitMargin.toFixed(1)}%
                   </span>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-[#69716F]">
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[9px] text-[#69716F]">
                   <span>Transaksi hari ini&nbsp; {transactionsCountToday}</span>
                   <span className="h-0.5 w-0.5 rounded-full bg-[#454B4A]" />
                   <span>Rata-rata&nbsp; {formatRupiah(averageTransaction)}</span>
                 </div>
               </div>
 
-              <div className="inline-flex self-start rounded-lg border border-[#282D2D] bg-[#101313] p-0.5">
+              <div className="ml-auto inline-flex self-start rounded-lg border border-[#282D2D] bg-[#101313] p-0.5">
                 {(['Hari Ini', '7 Hari', '30 Hari', 'Custom'] as Range[]).map(item => (
                   <button
                     key={item}
@@ -135,7 +135,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative mt-2.5 h-[112px] select-none touch-none sm:h-[130px]">
+            <div className="relative col-span-2 mt-1.5 h-[84px] select-none touch-none sm:col-span-1 sm:h-[130px]">
               <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
