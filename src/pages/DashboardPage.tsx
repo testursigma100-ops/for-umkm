@@ -131,7 +131,7 @@ export function DashboardPage({
               </div>
             </div>
 
-            <div className="relative mt-1.5 h-[84px] select-none touch-none sm:h-[130px]">
+            <div className="relative mt-3 h-[92px] overflow-hidden select-none touch-none sm:mt-4 sm:h-[130px]">
               <div className="pointer-events-none absolute inset-x-0 top-0 bottom-7 flex flex-col justify-between">
                 {[0, 1, 2, 3, 4].map(i => (
                   <div key={i} className="border-t border-[#1A2020]" />
@@ -147,7 +147,7 @@ export function DashboardPage({
               <svg
                 viewBox={`0 0 ${chart.width} ${chart.height}`}
                 preserveAspectRatio="none"
-                className="absolute inset-x-7 top-0 h-[calc(100%-28px)] w-[calc(100%-28px)] overflow-visible"
+                className="absolute inset-x-7 top-0 h-[calc(100%-28px)] w-[calc(100%-28px)] overflow-hidden"
                 onMouseLeave={() => setHoverIndex(null)}
                 onMouseMove={event => {
                   if (!chart.points.length) return;
@@ -234,10 +234,10 @@ export function DashboardPage({
 
               {activePoint && hoverIndex !== null && (
                 <div
-                  className="pointer-events-none absolute z-10 w-[132px] -translate-x-1/2 rounded-md border border-[#2A3230] bg-[#0B0F0F]/95 px-3 py-2 shadow-xl backdrop-blur"
+                  className="pointer-events-none absolute z-10 max-w-[calc(100%-16px)] w-[132px] -translate-x-1/2 rounded-md border border-[#2A3230] bg-[#0B0F0F]/95 px-3 py-2 shadow-xl backdrop-blur"
                   style={{
                     left: `clamp(66px, calc(28px + ${((activePoint.x / chart.width) * 100)}% - 14px), calc(100% - 66px))`,
-                    top: Math.max(4, (activePoint.y / chart.height) * 100 - 15) + '%',
+                    top: Math.min(62, Math.max(4, (activePoint.y / chart.height) * 100 - 15)) + '%',
                   }}
                 >
                   <p className="text-[9px] text-[#68716E]">{activePoint.label}</p>
