@@ -8,6 +8,9 @@ import {
   User,
   RefreshCw,
   AlertCircle,
+  BotMessageSquare,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface MarkdownContentProps {
