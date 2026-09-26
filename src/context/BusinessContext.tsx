@@ -2872,8 +2872,8 @@ export function BusinessProvider({
         const todayExps =
           expenses.filter(
             e =>
-              e.date ===
-              todayStr
+              (e.date || e.created_at || '')
+                .split('T')[0] === todayStr
           );
 
         const expensesToday =
@@ -2903,7 +2903,7 @@ export function BusinessProvider({
             }
           > = {};
 
-        transactions.forEach(
+        todayTxs.forEach(
           t => {
             if (
               Array.isArray(
@@ -2930,12 +2930,12 @@ export function BusinessProvider({
                   productSoldMap[
                     item.product_name
                   ].quantity +=
-                    item.quantity;
+                    Number(item.quantity || 0);
 
                   productSoldMap[
                     item.product_name
                   ].revenue +=
-                    item.subtotal;
+                    Number(item.subtotal || 0);
                 }
               );
             }
@@ -3013,8 +3013,8 @@ export function BusinessProvider({
           const dayExps =
             expenses.filter(
               e =>
-                e.date ===
-                dateString
+                (e.date || e.created_at || '')
+                  .split('T')[0] === dateString
             );
 
           const dayOmzet =
