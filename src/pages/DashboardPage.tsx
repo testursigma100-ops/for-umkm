@@ -4,8 +4,6 @@ import { formatRupiah } from '../utils/formatters';
 import { NavTab } from '../components/layout/BottomNav';
 import {
   ArrowUpRight,
-  BotMessageSquare,
-  CalendarDays,
   ChevronDown,
   ChevronRight,
   CircleDollarSign,
@@ -13,7 +11,6 @@ import {
   Plus,
   Receipt,
   ShoppingBag,
-  Sparkles,
   TrendingUp,
   TriangleAlert,
 } from 'lucide-react';
@@ -85,7 +82,6 @@ export function DashboardPage({
   const activePoint = hoverIndex !== null ? chart.points[hoverIndex] : chart.points[chart.points.length - 1];
 
   const productImage = (product: any) => product?.image_url || product?.image || '';
-  const transactionImage = (transaction: any) => transaction?.items?.[0]?.image_url || transaction?.items?.[0]?.image || '';
 
   return (
     <div className="min-h-full select-none pb-24 md:pb-10 text-[#E9ECEC] animate-[dashFade_.35s_ease-out]">
