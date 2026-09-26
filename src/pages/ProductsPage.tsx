@@ -265,7 +265,7 @@ export function ProductsPage() {
 
       {/* Loading Skeleton */}
       {isLoadingData && products.length === 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="p-4 rounded-xl bg-[#141416] border border-[#242428] animate-pulse space-y-3">
               <div className="flex items-center justify-between">
@@ -306,7 +306,7 @@ export function ProductsPage() {
         </div>
       ) : (
         /* Products List / Grid */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
           {filteredProducts.map(product => {
             const { profit, margin } = calculateProfit(product.selling_price, product.hpp);
             const isLowStock = product.stock <= product.min_stock;
@@ -315,15 +315,15 @@ export function ProductsPage() {
             return (
               <div
                 key={product.id}
-                className="p-4 rounded-xl bg-[#141416] border border-[#242428] hover:border-[#323238] transition-all flex flex-col justify-between"
+                className="p-2.5 sm:p-3 rounded-lg bg-[#141416] border border-[#242428] hover:border-[#323238] transition-all flex flex-col justify-between"
               >
                 <div>
                   {/* Category & Status */}
-                  <div className="flex items-center justify-between text-[11px] text-[#8A8A91] mb-2 font-medium">
+                  <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-[#8A8A91] mb-1.5 font-medium">
                     <span>{product.category}</span>
                     {isLowStock ? (
                       <span className="text-amber-400 font-medium flex items-center gap-1">
-                        <AlertTriangle className="w-3 h-3" />
+                        <AlertTriangle className="w-2.5 h-2.5" />
                         Stok Menipis
                       </span>
                     ) : (
@@ -332,92 +332,92 @@ export function ProductsPage() {
                   </div>
 
                   {/* Header: Photo Thumbnail (if exists) + Title */}
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2">
                     {productImage ? (
                       <img
                         src={productImage}
                         alt={product.name}
-                        className="w-12 h-12 rounded-lg object-cover bg-[#1C1C20] border border-[#242428] shrink-0"
+                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-md object-cover bg-[#1C1C20] border border-[#242428] shrink-0"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0">
-                        <Package className="w-5 h-5 opacity-60" />
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-md bg-[#1C1C20] border border-[#242428] flex items-center justify-center text-[#8A8A91] shrink-0">
+                        <Package className="w-4 h-4 opacity-60" />
                       </div>
                     )}
 
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-semibold text-[#F5F5F5] tracking-tight line-clamp-2 leading-snug">
+                      <h3 className="text-[11px] sm:text-xs font-semibold text-[#F5F5F5] tracking-tight line-clamp-2 leading-tight">
                         {product.name}
                       </h3>
-                      <p className="text-[11px] text-[#8A8A91] mt-0.5 tabular-nums">
+                      <p className="text-[9px] sm:text-[10px] text-[#8A8A91] mt-0.5 tabular-nums">
                         {formatRupiah(product.selling_price)}
                       </p>
                     </div>
                   </div>
 
                   {/* Price & Profit Specs */}
-                  <div className="grid grid-cols-2 gap-2 my-3 p-2.5 rounded-lg bg-[#1C1C20] border border-[#242428] text-xs">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 my-2 p-2 rounded-md bg-[#1C1C20] border border-[#242428] text-[10px]">
                     <div>
-                      <p className="text-[10px] text-[#8A8A91]">Harga Jual</p>
-                      <p className="font-semibold text-[#F5F5F5] tabular-nums">{formatRupiah(product.selling_price)}</p>
+                      <p className="text-[8px] sm:text-[9px] text-[#8A8A91]">Harga Jual</p>
+                      <p className="font-semibold text-[10px] sm:text-[11px] text-[#F5F5F5] tabular-nums">{formatRupiah(product.selling_price)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-[#8A8A91]">HPP (Modal)</p>
-                      <p className="font-medium text-[#8A8A91] tabular-nums">{formatRupiah(product.hpp)}</p>
+                      <p className="text-[8px] sm:text-[9px] text-[#8A8A91]">HPP (Modal)</p>
+                      <p className="font-medium text-[10px] sm:text-[11px] text-[#8A8A91] tabular-nums">{formatRupiah(product.hpp)}</p>
                     </div>
-                    <div className="pt-1 border-t border-[#242428]">
-                      <p className="text-[10px] text-[#8A8A91]">Laba / Porsi</p>
-                      <p className="font-semibold text-[#22C55E] tabular-nums">+{formatRupiah(profit)}</p>
+                    <div className="pt-1 border-t border-[#242428] min-w-0">
+                      <p className="text-[8px] sm:text-[9px] text-[#8A8A91]">Laba / Porsi</p>
+                      <p className="font-semibold text-[10px] sm:text-[11px] text-[#22C55E] tabular-nums truncate">+{formatRupiah(profit)}</p>
                     </div>
-                    <div className="pt-1 border-t border-[#242428]">
-                      <p className="text-[10px] text-[#8A8A91]">Margin</p>
-                      <p className="font-semibold text-[#22C55E] tabular-nums">{margin}%</p>
+                    <div className="pt-1 border-t border-[#242428] min-w-0">
+                      <p className="text-[8px] sm:text-[9px] text-[#8A8A91]">Margin</p>
+                      <p className="font-semibold text-[10px] sm:text-[11px] text-[#22C55E] tabular-nums">{margin}%</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Stock Controls & Actions */}
-                <div className="pt-2 border-t border-[#242428] flex items-center justify-between gap-2 select-none">
-                  <div className="flex items-center gap-1.5">
+                <div className="pt-1.5 border-t border-[#242428] flex items-center justify-between gap-1 select-none">
+                  <div className="flex items-center gap-0.5">
                     <button
                       type="button"
                       onClick={() => adjustStock(product.id, -1)}
-                      className="w-7 h-7 rounded-md bg-[#1C1C20] hover:bg-[#242428] active:scale-95 text-[#F5F5F5] flex items-center justify-center font-bold text-xs transition-all"
+                      className="w-6 h-6 rounded-md bg-[#1C1C20] hover:bg-[#242428] active:scale-95 text-[#F5F5F5] flex items-center justify-center font-bold text-[10px] transition-all"
                       title="Kurangi 1 Stok"
                     >
                       -
                     </button>
-                    <span className="text-xs font-semibold px-1 text-[#F5F5F5] tabular-nums">
+                    <span className="text-[10px] sm:text-xs font-semibold px-0.5 text-[#F5F5F5] tabular-nums truncate">
                       {formatNumber(product.stock)}{' '}
-                      <span className="text-[10px] text-[#8A8A91] font-normal">{product.unit}</span>
+                      <span className="text-[8px] sm:text-[9px] text-[#8A8A91] font-normal">{product.unit}</span>
                     </span>
                     <button
                       type="button"
                       onClick={() => adjustStock(product.id, 1)}
-                      className="w-7 h-7 rounded-md bg-[#1C1C20] hover:bg-[#242428] active:scale-95 text-[#F5F5F5] flex items-center justify-center font-bold text-xs transition-all"
+                      className="w-6 h-6 rounded-md bg-[#1C1C20] hover:bg-[#242428] active:scale-95 text-[#F5F5F5] flex items-center justify-center font-bold text-[10px] transition-all"
                       title="Tambah 1 Stok"
                     >
                       +
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <button
                       type="button"
                       onClick={() => openEditModal(product)}
-                      className="p-1.5 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#1C1C20] rounded-md transition-colors"
+                      className="p-1 text-[#8A8A91] hover:text-[#F5F5F5] hover:bg-[#1C1C20] rounded-md transition-colors"
                       title="Edit Produk"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-3 h-3" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeletingProduct(product)}
-                      className="p-1.5 text-[#8A8A91] hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
+                      className="p-1 text-[#8A8A91] hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors"
                       title="Hapus Produk"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
@@ -445,7 +445,7 @@ export function ProductsPage() {
           {/* Optional Product Photo Upload */}
           <div className="p-3 rounded-xl bg-[#1C1C20] border border-[#242428] space-y-2">
             <label className="block text-xs font-medium text-[#8A8A91]">
-              Foto Produk <span className="text-[10px] text-[#8A8A91] font-normal">(Opsional)</span>
+              Foto Produk <span className="text-[8px] sm:text-[9px] text-[#8A8A91] font-normal">(Opsional)</span>
             </label>
 
             <div className="flex items-center gap-3">
@@ -500,7 +500,7 @@ export function ProductsPage() {
                     </>
                   )}
                 </label>
-                <p className="text-[10px] text-[#8A8A91]">
+                <p className="text-[8px] sm:text-[9px] text-[#8A8A91]">
                   Format JPG, PNG atau WebP (otomatis dioptimalkan).
                 </p>
               </div>
